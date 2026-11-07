@@ -632,29 +632,20 @@
   </div>
 
   <script>
-    // --- Hardware Vibration Capability Detector ---
+    // --- Hardware Vibration Capability Detector (Fixed for Chrome User Activation policy) ---
     function detectVibrationSupport() {
-      const hasApi = typeof navigator !== "undefined" && typeof navigator.vibrate === "function";
+      const hasApi = typeof navigator !== "undefined" && "vibrate" in navigator;
       const isTouchDevice = (navigator.maxTouchPoints && navigator.maxTouchPoints > 0) || ("ontouchstart" in window);
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
                     (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 
-      // На iOS та ПК без тач-екрана апаратна вібрація у браузері не працює
-      if (!hasApi || !isTouchDevice || isIOS) return false;
-
-      try {
-        // Перевіряємо, чи приймає браузер порожній патерн без помилки
-        return navigator.vibrate(0) !== false;
-      } catch {
-        return false;
-      }
+      // Не викликаємо navigator.vibrate(0) на старті, бо Chrome блокує його до першого тапу!
+      return Boolean(hasApi && isTouchDevice && !isIOS);
     }
 
     const canVibrate = detectVibrationSupport();
 
-    // Визначаємо активний режим:
-    // Якщо вібро не підтримується -> автоматом Режим 3 ("acoustic_only")
-    // Якщо підтримується -> Режим 1 ("sub_kick") або збережений вибір із (1, 2, 3)
+    // Якщо вібро підтримується -> автоматом Режим 1 ("sub_kick"), інакше -> Режим 3 ("acoustic_only")
     const validModes = ["sub_kick", "micro_2ms", "acoustic_only"];
     let savedMode = localStorage.getItem("bp_haptic_mode");
     if (!validModes.includes(savedMode)) savedMode = null;
@@ -711,7 +702,6 @@
     // --- Haptic Modes Controller ---
     const Haptics = {
       lightKnock() {
-        // Якщо пристрій не підтримує вібро — завжди працює Варіант 3
         if (!canVibrate || hapticMode === "acoustic_only") {
           playPhysicalSubThump();
           return;
@@ -795,7 +785,7 @@
         updateQBoxes();
       }
 
-      // При дотику до кнопки не викликаємо navigator.vibrate(), щоб зберегти чистий системний тап
+      // Жодного navigator.vibrate() при дотику, щоб не перебивати чистий системний тап
       playPhysicalSubThump();
 
       state = "STAGING";
