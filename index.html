@@ -264,7 +264,7 @@
       gap: 8px;
       cursor: pointer;
       transition: transform 0.22s var(--spring), border-radius 0.25s ease, background-color 0.2s ease;
-      touch-action: none;
+      touch-action: manipulation;
     }
 
     .clutch-pad.holding {
@@ -397,10 +397,10 @@
     }
 
     .modal-sub {
-      font-size: 0.84rem;
+      font-size: 0.82rem;
       color: var(--md-text-dim);
-      line-height: 1.4;
-      margin-top: -8px;
+      line-height: 1.45;
+      margin-top: -6px;
     }
 
     .md-input {
@@ -467,41 +467,49 @@
       color: var(--md-on-primary);
     }
 
-    /* Haptic Slider inside Settings Modal */
-    .slider-group {
-      background: var(--md-surface);
-      padding: 14px 16px;
-      border-radius: 20px;
+    /* Mode Selector Cards inside Haptic Modal */
+    .mode-list {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 8px;
     }
 
-    .slider-top {
+    .mode-option {
+      background: var(--md-surface);
+      border: 1.5px solid transparent;
+      border-radius: 18px;
+      padding: 12px 14px;
+      text-align: left;
+      color: var(--md-text);
+      font-family: inherit;
+      cursor: pointer;
       display: flex;
-      justify-content: space-between;
-      font-size: 0.85rem;
-      font-weight: 700;
+      flex-direction: column;
+      gap: 3px;
+      transition: all 0.18s ease;
     }
 
-    .slider-top span.val {
-      font-family: 'JetBrains Mono', monospace;
+    .mode-option.active {
+      border-color: var(--md-primary);
+      background: rgba(168, 199, 250, 0.1);
+    }
+
+    .mode-option .m-title {
+      font-size: 0.88rem;
+      font-weight: 700;
       color: var(--md-primary);
     }
 
-    input[type="range"] {
-      width: 100%;
-      accent-color: var(--md-primary);
-      height: 6px;
-      border-radius: 999px;
-      cursor: pointer;
+    .mode-option .m-desc {
+      font-size: 0.76rem;
+      color: var(--md-text-dim);
     }
   </style>
 </head>
 <body>
 
   <div class="app-container">
-    <!-- Top Bar: Clean Title + Active Driver Pill + Haptic Settings -->
+    <!-- Top Bar -->
     <div class="top-bar">
       <div class="app-title">● Bite Point</div>
       <div class="top-actions">
@@ -509,7 +517,7 @@
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           <span id="currentDriverLabel">ПІЛОТ 1</span>
         </button>
-        <button class="icon-btn" id="openHapticModalBtn" title="Налаштування вібро">
+        <button class="icon-btn" id="openHapticModalBtn" title="Налаштування стуку">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         </button>
       </div>
@@ -578,67 +586,118 @@
     </div>
   </div>
 
-  <!-- MODAL 2: Haptic Tuning Dialog -->
+  <!-- MODAL 2: Haptic Mode Selector Dialog -->
   <div class="modal-backdrop" id="hapticModal">
     <div class="modal-card">
-      <div class="modal-title">Калібрування стуку</div>
-      <div class="modal-sub">У першому варіанті стояв імпульс 30–35 мс — саме він дає важкий одиночний удар замість дрібного дзижчання.</div>
+      <div class="modal-title">Режим тактильного стуку</div>
+      <div class="modal-sub">При натисканні на кнопку дзижчання повністю вимкнено (залишено чистий системний тап). Обери, як саме мають стукати вогні:</div>
       
-      <div class="slider-group">
-        <div class="slider-top">
-          <span>Сила імпульсу (вогні та дотик)</span>
-          <span class="val" id="hapticMsLabel">32 мс</span>
-        </div>
-        <input type="range" id="hapticSlider" min="8" max="60" step="1" value="32" />
+      <div class="mode-list" id="hapticModeList">
+        <button class="mode-option active" data-mode="sub_kick">
+          <span class="m-title">1. Sub-Bass Kick + 2мс (Без дзижчання)</span>
+          <span class="m-desc">Низькочастотний імпульс 55Hz + мікро-поштовх 2мс. Створює глухий фізичний стук у корпусі телефона.</span>
+        </button>
+        <button class="mode-option" data-mode="micro_2ms">
+          <span class="m-title">2. Сухий мікро-імпульс (2 мс)</span>
+          <span class="m-desc">Моторчик отримує імпульс 2 мс і миттєво гальмує, не встигаючи перейти в дзижчання.</span>
+        </button>
+        <button class="mode-option" data-mode="acoustic_only">
+          <span class="m-title">3. Чистий акустичний стук (Без вібромотора)</span>
+          <span class="m-desc">Нуль дзижчання. Глухий тактильний удар створюється суто звуковим Sub-Bass імпульсом.</span>
+        </button>
+        <button class="mode-option" data-mode="proto1_35ms">
+          <span class="m-title">4. Як у Прототипі №1 (35 мс на вогнях)</span>
+          <span class="m-desc">Жодної вібрації при дотику до кнопки, і класичні 35 мс на кожен вогник.</span>
+        </button>
       </div>
 
       <div class="modal-actions">
-        <button class="md-btn text" id="testHapticBtn">Тест стуку</button>
+        <button class="md-btn text" id="testHapticBtn">Тест вогника</button>
         <button class="md-btn filled" id="closeHapticBtn">Готово</button>
       </div>
     </div>
   </div>
 
   <script>
-    // --- Heavy Thump Haptics Engine (Default 32ms like Prototype #1) ---
-    let pulseMs = Number(localStorage.getItem("bp_haptic_ms")) || 32;
-
-    const Haptics = {
-      thump() {
-        // Той самий важкий одиночний "стук" при дотику і запалюванні вогнів
-        if ("vibrate" in navigator) navigator.vibrate(pulseMs);
-      },
-      release() {
-        // Чіткий удар при старті
-        if ("vibrate" in navigator) navigator.vibrate(pulseMs + 8);
-      },
-      fault() {
-        // Подвійний важкий удар при фальстарті
-        if ("vibrate" in navigator) navigator.vibrate([pulseMs + 15, 65, pulseMs + 25]);
-      }
-    };
-
-    // --- Pure Web Audio Synthesizer ---
+    // --- Audio & Acoustic Haptic Synthesizer ---
     let audioCtx = null;
-    function playTone(freq = 880, duration = 0.08, type = "sine") {
+    function getAudioCtx() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === "suspended") audioCtx.resume();
+      return audioCtx;
+    }
+
+    // F1 Light Beep
+    function playTone(freq = 860, duration = 0.085, type = "sine") {
       try {
-        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === "suspended") audioCtx.resume();
-
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
+        const ctx = getAudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
         osc.type = type;
-        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        osc.frequency.setValueAtTime(freq, ctx.currentTime);
 
-        gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        gain.gain.setValueAtTime(0.16, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
 
         osc.connect(gain);
-        gain.connect(audioCtx.destination);
+        gain.connect(ctx.destination);
         osc.start();
-        osc.stop(audioCtx.currentTime + duration);
+        osc.stop(ctx.currentTime + duration);
       } catch (e) {}
     }
+
+    // Фізичний низькочастотний удар (Sub-Bass Thump 110Hz -> 45Hz за 25 мс)
+    // Відчувається пальцями на екрані як глухий механічний стук без дзижчання вібромотора
+    function playPhysicalSubThump() {
+      try {
+        const ctx = getAudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        
+        // Різкий спад частоти створює фізичний удар мембрани динаміка
+        osc.frequency.setValueAtTime(125, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(42, ctx.currentTime + 0.028);
+
+        gain.gain.setValueAtTime(0.45, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.032);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.034);
+      } catch (e) {}
+    }
+
+    // --- Haptic Modes Controller ---
+    let hapticMode = localStorage.getItem("bp_haptic_mode") || "sub_kick";
+
+    const Haptics = {
+      // Викликається на кожному вогнику світлофора
+      lightKnock() {
+        if (hapticMode === "sub_kick") {
+          if ("vibrate" in navigator) navigator.vibrate(2);
+          playPhysicalSubThump();
+        } else if (hapticMode === "micro_2ms") {
+          if ("vibrate" in navigator) navigator.vibrate(2);
+        } else if (hapticMode === "acoustic_only") {
+          playPhysicalSubThump();
+        } else if (hapticMode === "proto1_35ms") {
+          if ("vibrate" in navigator) navigator.vibrate(35);
+        }
+      },
+      release() {
+        if (hapticMode === "acoustic_only") {
+          playPhysicalSubThump();
+        } else {
+          if ("vibrate" in navigator) navigator.vibrate(3);
+          playPhysicalSubThump();
+        }
+      },
+      fault() {
+        if ("vibrate" in navigator) navigator.vibrate([15, 60, 20]);
+      }
+    };
 
     // --- State & Elements ---
     const pills = document.querySelectorAll(".light-pill");
@@ -686,7 +745,6 @@
 
     // --- Start Sequence (Hold) ---
     function handleHoldStart(e) {
-      if (e.cancelable) e.preventDefault();
       if (state !== "IDLE") return;
       if (document.querySelector(".modal-backdrop.open")) return;
 
@@ -695,7 +753,11 @@
         updateQBoxes();
       }
 
-      Haptics.thump(); // Глухий стук при затисканні панелі
+      // ВАЖЛИВО: Жодного navigator.vibrate() при натисканні!
+      // Завдяки цьому ніщо не перебиває рідний системний стук при торканні кнопки,
+      // плюс додаємо короткий акустичний удар.
+      playPhysicalSubThump();
+
       state = "STAGING";
       resetLights();
 
@@ -710,7 +772,7 @@
       for (let i = 0; i < 5; i++) {
         const t = setTimeout(() => {
           pills[i].classList.add("on");
-          Haptics.thump(); // Exact same solid thump on every red light!
+          Haptics.lightKnock(); // Стук на кожному вогнику без дзижчання
           playTone(860, 0.085, "sine");
 
           if (i === 4) {
@@ -733,7 +795,6 @@
 
     // --- Release Sequence ---
     function handleRelease(e) {
-      if (e && e.cancelable) e.preventDefault();
       if (state === "IDLE") return;
 
       clutchPad.classList.remove("holding", "go-state");
@@ -822,7 +883,7 @@
     }
 
     document.getElementById("openNameModalBtn").addEventListener("click", () => {
-      Haptics.thump();
+      playPhysicalSubThump();
       renderRecentChips();
       driverNameInput.value = currentDriver;
       nameModal.classList.add("open");
@@ -834,14 +895,14 @@
     });
 
     document.getElementById("saveNameBtn").addEventListener("click", () => {
-      Haptics.thump();
+      playPhysicalSubThump();
       setDriverName(driverNameInput.value || currentDriver);
       nameModal.classList.remove("open");
     });
 
     driverNameInput.addEventListener("keydown", e => {
       if (e.key === "Enter") {
-        Haptics.thump();
+        playPhysicalSubThump();
         setDriverName(driverNameInput.value || currentDriver);
         nameModal.classList.remove("open");
       }
@@ -850,41 +911,43 @@
     recentDriversContainer.addEventListener("click", e => {
       const chip = e.target.closest(".recent-chip");
       if (!chip) return;
-      Haptics.thump();
+      playPhysicalSubThump();
       setDriverName(chip.dataset.name);
       nameModal.classList.remove("open");
     });
 
-    // --- Haptic Calibration Modal Logic ---
+    // --- Haptic Mode Selector Modal Logic ---
     const hapticModal = document.getElementById("hapticModal");
-    const hapticSlider = document.getElementById("hapticSlider");
-    const hapticMsLabel = document.getElementById("hapticMsLabel");
+    const hapticModeList = document.getElementById("hapticModeList");
 
-    hapticSlider.value = pulseMs;
-    hapticMsLabel.textContent = `${pulseMs} мс`;
+    function updateModeUI() {
+      hapticModeList.querySelectorAll(".mode-option").forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.mode === hapticMode);
+      });
+    }
+    updateModeUI();
 
     document.getElementById("openHapticModalBtn").addEventListener("click", () => {
-      Haptics.thump();
+      playPhysicalSubThump();
       hapticModal.classList.add("open");
     });
 
-    hapticSlider.addEventListener("input", () => {
-      pulseMs = Number(hapticSlider.value);
-      hapticMsLabel.textContent = `${pulseMs} мс`;
-      localStorage.setItem("bp_haptic_ms", pulseMs);
-    });
-
-    hapticSlider.addEventListener("change", () => {
-      Haptics.thump();
+    hapticModeList.addEventListener("click", e => {
+      const btn = e.target.closest(".mode-option");
+      if (!btn) return;
+      hapticMode = btn.dataset.mode;
+      localStorage.setItem("bp_haptic_mode", hapticMode);
+      updateModeUI();
+      Haptics.lightKnock();
+      playTone(860, 0.085, "sine");
     });
 
     document.getElementById("testHapticBtn").addEventListener("click", () => {
-      Haptics.thump();
+      Haptics.lightKnock();
       playTone(860, 0.085, "sine");
     });
 
     document.getElementById("closeHapticBtn").addEventListener("click", () => {
-      Haptics.thump();
       hapticModal.classList.remove("open");
     });
 
@@ -935,7 +998,7 @@
     });
 
     document.getElementById("clearLbBtn").addEventListener("click", () => {
-      Haptics.thump();
+      playPhysicalSubThump();
       localStorage.removeItem("bitepoint_md3_lb");
       renderLeaderboard();
     });
