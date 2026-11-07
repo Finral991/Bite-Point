@@ -403,6 +403,18 @@
       margin-top: -6px;
     }
 
+    .device-status-pill {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: 12px;
+      background: var(--md-surface);
+      color: var(--md-primary);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
     .md-input {
       width: 100%;
       background: var(--md-surface);
@@ -492,6 +504,11 @@
     .mode-option.active {
       border-color: var(--md-primary);
       background: rgba(168, 199, 250, 0.1);
+    }
+
+    .mode-option.disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
     }
 
     .mode-option .m-title {
@@ -586,39 +603,64 @@
     </div>
   </div>
 
-  <!-- MODAL 2: Haptic Mode Selector Dialog -->
+  <!-- MODAL 2: Haptic Mode Selector Dialog (Options 1, 2, 3 only) -->
   <div class="modal-backdrop" id="hapticModal">
     <div class="modal-card">
       <div class="modal-title">Режим тактильного стуку</div>
-      <div class="modal-sub">При натисканні на кнопку дзижчання повністю вимкнено (залишено чистий системний тап). Обери, як саме мають стукати вогні:</div>
+      <div class="device-status-pill" id="hapticStatusBadge">Визначення вібромотора...</div>
       
       <div class="mode-list" id="hapticModeList">
-        <button class="mode-option active" data-mode="sub_kick">
-          <span class="m-title">1. Sub-Bass Kick + 2мс (Без дзижчання)</span>
-          <span class="m-desc">Низькочастотний імпульс 55Hz + мікро-поштовх 2мс. Створює глухий фізичний стук у корпусі телефона.</span>
+        <button class="mode-option" data-mode="sub_kick">
+          <span class="m-title">1. Sub-Bass Kick + 2мс (За замовчуванням)</span>
+          <span class="m-desc">Низькочастотний імпульс 55Hz + мікро-поштовх 2мс. Глухий фізичний стук у корпусі телефона.</span>
         </button>
         <button class="mode-option" data-mode="micro_2ms">
           <span class="m-title">2. Сухий мікро-імпульс (2 мс)</span>
-          <span class="m-desc">Моторчик отримує імпульс 2 мс і миттєво гальмує, не встигаючи перейти в дзижчання.</span>
+          <span class="m-desc">Суто механічний короткий поштовх вібромотора на 2 мс без дзижчання.</span>
         </button>
         <button class="mode-option" data-mode="acoustic_only">
-          <span class="m-title">3. Чистий акустичний стук (Без вібромотора)</span>
-          <span class="m-desc">Нуль дзижчання. Глухий тактильний удар створюється суто звуковим Sub-Bass імпульсом.</span>
-        </button>
-        <button class="mode-option" data-mode="proto1_35ms">
-          <span class="m-title">4. Як у Прототипі №1 (35 мс на вогнях)</span>
-          <span class="m-desc">Жодної вібрації при дотику до кнопки, і класичні 35 мс на кожен вогник.</span>
+          <span class="m-title">3. Чистий акустичний стук (Без вібро)</span>
+          <span class="m-desc">Авто-режим для пристроїв без вібрації. Глухий тактильний удар створюється Sub-Bass імпульсом.</span>
         </button>
       </div>
 
       <div class="modal-actions">
-        <button class="md-btn text" id="testHapticBtn">Тест вогника</button>
+        <button class="md-btn text" id="testHapticBtn">Тест стуку</button>
         <button class="md-btn filled" id="closeHapticBtn">Готово</button>
       </div>
     </div>
   </div>
 
   <script>
+    // --- Hardware Vibration Capability Detector ---
+    function detectVibrationSupport() {
+      const hasApi = typeof navigator !== "undefined" && typeof navigator.vibrate === "function";
+      const isTouchDevice = (navigator.maxTouchPoints && navigator.maxTouchPoints > 0) || ("ontouchstart" in window);
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+      // На iOS та ПК без тач-екрана апаратна вібрація у браузері не працює
+      if (!hasApi || !isTouchDevice || isIOS) return false;
+
+      try {
+        // Перевіряємо, чи приймає браузер порожній патерн без помилки
+        return navigator.vibrate(0) !== false;
+      } catch {
+        return false;
+      }
+    }
+
+    const canVibrate = detectVibrationSupport();
+
+    // Визначаємо активний режим:
+    // Якщо вібро не підтримується -> автоматом Режим 3 ("acoustic_only")
+    // Якщо підтримується -> Режим 1 ("sub_kick") або збережений вибір із (1, 2, 3)
+    const validModes = ["sub_kick", "micro_2ms", "acoustic_only"];
+    let savedMode = localStorage.getItem("bp_haptic_mode");
+    if (!validModes.includes(savedMode)) savedMode = null;
+
+    let hapticMode = canVibrate ? (savedMode || "sub_kick") : "acoustic_only";
+
     // --- Audio & Acoustic Haptic Synthesizer ---
     let audioCtx = null;
     function getAudioCtx() {
@@ -627,7 +669,6 @@
       return audioCtx;
     }
 
-    // F1 Light Beep
     function playTone(freq = 860, duration = 0.085, type = "sine") {
       try {
         const ctx = getAudioCtx();
@@ -646,8 +687,7 @@
       } catch (e) {}
     }
 
-    // Фізичний низькочастотний удар (Sub-Bass Thump 110Hz -> 45Hz за 25 мс)
-    // Відчувається пальцями на екрані як глухий механічний стук без дзижчання вібромотора
+    // Фізичний низькочастотний удар (Sub-Bass Thump 125Hz -> 42Hz за 28 мс)
     function playPhysicalSubThump() {
       try {
         const ctx = getAudioCtx();
@@ -655,7 +695,6 @@
         const gain = ctx.createGain();
         osc.type = "sine";
         
-        // Різкий спад частоти створює фізичний удар мембрани динаміка
         osc.frequency.setValueAtTime(125, ctx.currentTime);
         osc.frequency.exponentialRampToValueAtTime(42, ctx.currentTime + 0.028);
 
@@ -670,32 +709,35 @@
     }
 
     // --- Haptic Modes Controller ---
-    let hapticMode = localStorage.getItem("bp_haptic_mode") || "sub_kick";
-
     const Haptics = {
-      // Викликається на кожному вогнику світлофора
       lightKnock() {
+        // Якщо пристрій не підтримує вібро — завжди працює Варіант 3
+        if (!canVibrate || hapticMode === "acoustic_only") {
+          playPhysicalSubThump();
+          return;
+        }
+
         if (hapticMode === "sub_kick") {
-          if ("vibrate" in navigator) navigator.vibrate(2);
+          navigator.vibrate(2);
           playPhysicalSubThump();
         } else if (hapticMode === "micro_2ms") {
-          if ("vibrate" in navigator) navigator.vibrate(2);
-        } else if (hapticMode === "acoustic_only") {
-          playPhysicalSubThump();
-        } else if (hapticMode === "proto1_35ms") {
-          if ("vibrate" in navigator) navigator.vibrate(35);
+          navigator.vibrate(2);
         }
       },
       release() {
-        if (hapticMode === "acoustic_only") {
+        if (!canVibrate || hapticMode === "acoustic_only") {
           playPhysicalSubThump();
         } else {
-          if ("vibrate" in navigator) navigator.vibrate(3);
+          navigator.vibrate(3);
           playPhysicalSubThump();
         }
       },
       fault() {
-        if ("vibrate" in navigator) navigator.vibrate([15, 60, 20]);
+        if (canVibrate && hapticMode !== "acoustic_only") {
+          navigator.vibrate([12, 55, 16]);
+        } else {
+          playPhysicalSubThump();
+        }
       }
     };
 
@@ -753,9 +795,7 @@
         updateQBoxes();
       }
 
-      // ВАЖЛИВО: Жодного navigator.vibrate() при натисканні!
-      // Завдяки цьому ніщо не перебиває рідний системний стук при торканні кнопки,
-      // плюс додаємо короткий акустичний удар.
+      // При дотику до кнопки не викликаємо navigator.vibrate(), щоб зберегти чистий системний тап
       playPhysicalSubThump();
 
       state = "STAGING";
@@ -772,7 +812,7 @@
       for (let i = 0; i < 5; i++) {
         const t = setTimeout(() => {
           pills[i].classList.add("on");
-          Haptics.lightKnock(); // Стук на кожному вогнику без дзижчання
+          Haptics.lightKnock();
           playTone(860, 0.085, "sine");
 
           if (i === 4) {
@@ -919,22 +959,32 @@
     // --- Haptic Mode Selector Modal Logic ---
     const hapticModal = document.getElementById("hapticModal");
     const hapticModeList = document.getElementById("hapticModeList");
+    const hapticStatusBadge = document.getElementById("hapticStatusBadge");
 
     function updateModeUI() {
+      hapticStatusBadge.textContent = canVibrate
+        ? "✓ Вібромотор підтримується (активний вибір 1–3)"
+        : "ℹ Вібромотор недоступний — авто-режим №3";
+
       hapticModeList.querySelectorAll(".mode-option").forEach(btn => {
-        btn.classList.toggle("active", btn.dataset.mode === hapticMode);
+        const mode = btn.dataset.mode;
+        const isDisabled = !canVibrate && mode !== "acoustic_only";
+        btn.classList.toggle("disabled", isDisabled);
+        btn.classList.toggle("active", mode === hapticMode);
       });
     }
     updateModeUI();
 
     document.getElementById("openHapticModalBtn").addEventListener("click", () => {
       playPhysicalSubThump();
+      updateModeUI();
       hapticModal.classList.add("open");
     });
 
     hapticModeList.addEventListener("click", e => {
       const btn = e.target.closest(".mode-option");
-      if (!btn) return;
+      if (!btn || btn.classList.contains("disabled")) return;
+
       hapticMode = btn.dataset.mode;
       localStorage.setItem("bp_haptic_mode", hapticMode);
       updateModeUI();
