@@ -1,969 +1,670 @@
 <!DOCTYPE html>
-<html lang="uk" class="dark">
+<html lang="uk">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BITE POINT // F1 Start Reaction Test</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts: Inter & JetBrains Mono -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
-    
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                        mono: ['JetBrains Mono', 'monospace'],
-                    },
-                    colors: {
-                        surface: {
-                            950: '#0a0c10',
-                            900: '#0f1115',
-                            800: '#181b22',
-                            700: '#232730',
-                            600: '#313744'
-                        },
-                        f1: {
-                            red: '#ff1801',
-                            amber: '#ffb800',
-                            green: '#00e676',
-                            purple: '#d500f9',
-                            cyan: '#00e5ff'
-                        }
-                    }
-                }
-            }
-        }
-    </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Bite Point — Material You Edition</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* Material You Dark Theme Tokens */
+      --md-bg: #111318;
+      --md-surface: #1d2026;
+      --md-surface-high: #282a31;
+      --md-outline: #43474f;
+      
+      --md-primary: #a8c7fa;
+      --md-on-primary: #062e6f;
+      --md-primary-container: #284777;
+      
+      --md-red: #ffb4ab;
+      --md-red-active: #ff5449;
+      --md-red-container: #93000a;
+      
+      --md-amber: #ffdf9e;
+      --md-amber-active: #fbbc04;
+      
+      --md-green: #a6f2d1;
+      --md-green-container: #00513b;
 
-    <style>
-        /* Користувацькі стилі для Material You Dark + F1 Telemetry */
-        * {
-            -webkit-tap-highlight-color: transparent;
-        }
+      --md-text: #e2e2e9;
+      --md-text-dim: #8e9099;
 
-        body {
-            background-color: #0a0c10;
-            color: #f3f4f6;
-            overflow-x: hidden;
-        }
+      --spring: cubic-bezier(0.2, 0.9, 0.3, 1.15);
+    }
 
-        /* Карбоновий патерн для світлофора */
-        .carbon-housing {
-            background: 
-                radial-gradient(black 15%, transparent 16%) 0 0,
-                radial-gradient(black 15%, transparent 16%) 4px 4px,
-                radial-gradient(rgba(255,255,255,.06) 15%, transparent 20%) 0 1px,
-                radial-gradient(rgba(255,255,255,.06) 15%, transparent 20%) 4px 5px;
-            background-color: #14161c;
-            background-size: 8px 8px;
-        }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-        /* Вимкнена LED лампа */
-        .f1-led {
-            background: radial-gradient(circle at 35% 35%, #2a1518 0%, #140b0d 65%, #0a0607 100%);
-            box-shadow: 
-                inset 0 3px 6px rgba(0, 0, 0, 0.9),
-                inset 0 -1px 2px rgba(255, 255, 255, 0.06),
-                0 1px 1px rgba(255, 255, 255, 0.05);
-            transition: background 0.03s ease, box-shadow 0.03s ease, transform 0.03s ease;
-        }
+    body {
+      background-color: var(--md-bg);
+      color: var(--md-text);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      min-height: 100dvh;
+      display: flex;
+      justify-content: center;
+      padding: 16px;
+      overflow-x: hidden;
+    }
 
-        /* Увімкнена червона LED лампа */
-        .f1-led.red-on {
-            background: radial-gradient(circle at 40% 40%, #fff0f0 0%, #ff3b28 30%, #ff1801 65%, #990000 100%);
-            box-shadow: 
-                0 0 18px #ff1801,
-                0 0 36px rgba(255, 24, 1, 0.8),
-                0 0 65px rgba(255, 24, 1, 0.4),
-                inset 0 0 8px #ffffff;
-            transform: scale(1.03);
-        }
+    .app-container {
+      width: 100%;
+      max-width: 440px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
 
-        /* Жовта лампа (Aborted Start / Jump Start) */
-        .f1-led-amber {
-            background: radial-gradient(circle at 35% 35%, #292212 0%, #141109 70%, #0a0905 100%);
-            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.9);
-            transition: all 0.05s ease;
-        }
+    /* Top Bar & Driver Chips */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--md-surface);
+      padding: 10px 14px;
+      border-radius: 24px;
+    }
 
-        .f1-led-amber.amber-on {
-            background: radial-gradient(circle at 40% 40%, #fffbeb 0%, #ffc400 35%, #ff9100 75%, #a65c00 100%);
-            box-shadow: 
-                0 0 15px #ffb800,
-                0 0 32px rgba(255, 184, 0, 0.85),
-                inset 0 0 6px #ffffff;
-        }
+    .app-title {
+      font-weight: 800;
+      font-size: 1.05rem;
+      letter-spacing: -0.02em;
+      color: var(--md-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
 
-        @keyframes flashAmber {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.15; }
-        }
+    .driver-selector {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
 
-        .amber-flashing {
-            animation: flashAmber 0.28s infinite ease-in-out;
-        }
+    .chip {
+      background: var(--md-surface-high);
+      color: var(--md-text-dim);
+      border: 1px solid transparent;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
 
-        /* Захист кнопки зчеплення від виділення та меню на мобільних */
-        .clutch-zone {
-            touch-action: none;
-            user-select: none;
-            -webkit-user-select: none;
-            -webkit-touch-callout: none;
-            transition: transform 0.12s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
-        }
+    .chip.active {
+      background: var(--md-primary-container);
+      color: var(--md-primary);
+      border-color: rgba(168, 199, 250, 0.3);
+    }
 
-        .clutch-zone.pressed {
-            transform: scale(0.975) translateY(2px);
-        }
+    /* Minimalist Material You Lights Card */
+    .lights-card {
+      background: var(--md-surface);
+      border-radius: 32px;
+      padding: 28px 20px;
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      height: 140px;
+      position: relative;
+      transition: background-color 0.25s ease;
+    }
 
-        /* Кастомний скролбар для таблиці */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #0f1115;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #232730;
-            border-radius: 9999px;
-        }
-    </style>
+    .light-pill {
+      width: 42px;
+      height: 54px;
+      border-radius: 999px;
+      background: var(--md-surface-high);
+      transition: all 0.28s var(--spring);
+      position: relative;
+    }
+
+    /* Active Red Light */
+    .light-pill.on {
+      height: 82px;
+      background: var(--md-red-active);
+      box-shadow: 0 0 28px rgba(255, 84, 73, 0.45);
+    }
+
+    /* Jump Start / Fault State */
+    .light-pill.fault {
+      height: 70px;
+      background: var(--md-amber-active);
+      box-shadow: 0 0 24px rgba(251, 188, 4, 0.4);
+      animation: pulseFault 0.35s infinite alternate;
+    }
+
+    @keyframes pulseFault {
+      from { transform: scale(0.95); opacity: 0.75; }
+      to { transform: scale(1.04); opacity: 1; }
+    }
+
+    /* Telemetry Display Card */
+    .telemetry-card {
+      background: var(--md-surface);
+      border-radius: 32px;
+      padding: 22px 20px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .status-badge {
+      align-self: center;
+      background: var(--md-surface-high);
+      color: var(--md-text-dim);
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 5px 14px;
+      border-radius: 999px;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      transition: all 0.2s ease;
+    }
+
+    .status-badge.good {
+      background: var(--md-green-container);
+      color: var(--md-green);
+    }
+
+    .status-badge.penalty {
+      background: var(--md-red-container);
+      color: var(--md-red);
+    }
+
+    .main-timer {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 3.4rem;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      line-height: 1;
+      color: var(--md-text);
+    }
+
+    .main-timer span.unit {
+      font-size: 1.4rem;
+      color: var(--md-text-dim);
+      font-weight: 500;
+    }
+
+    /* Q1 / Q2 / Q3 Pills */
+    .q-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .q-box {
+      background: var(--md-surface-high);
+      padding: 10px 8px;
+      border-radius: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      border: 1.5px solid transparent;
+      transition: all 0.2s ease;
+    }
+
+    .q-box.current {
+      border-color: var(--md-primary);
+      background: rgba(168, 199, 250, 0.08);
+    }
+
+    .q-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--md-text-dim);
+    }
+
+    .q-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    /* Interactive Clutch Button (Material You Squircle) */
+    .clutch-pad {
+      flex: 1;
+      min-height: 150px;
+      background: var(--md-primary-container);
+      color: var(--md-primary);
+      border-radius: 36px;
+      border: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: transform 0.22s var(--spring), border-radius 0.25s ease, background-color 0.2s ease;
+      touch-action: none;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .clutch-pad.holding {
+      transform: scale(0.96);
+      border-radius: 48px;
+      background: var(--md-primary);
+      color: var(--md-on-primary);
+    }
+
+    .clutch-pad.go-state {
+      background: var(--md-green);
+      color: var(--md-green-container);
+    }
+
+    .clutch-title {
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+    }
+
+    .clutch-sub {
+      font-size: 0.85rem;
+      opacity: 0.8;
+      font-weight: 600;
+    }
+
+    /* Leaderboard Card */
+    .leaderboard-card {
+      background: var(--md-surface);
+      border-radius: 28px;
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .lb-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--md-text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .lb-clear {
+      background: none;
+      border: none;
+      color: var(--md-primary);
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .lb-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 135px;
+      overflow-y: auto;
+    }
+
+    .lb-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--md-surface-high);
+      padding: 9px 14px;
+      border-radius: 16px;
+      font-size: 0.88rem;
+      font-weight: 600;
+    }
+
+    .lb-item .rank {
+      color: var(--md-primary);
+      font-weight: 800;
+      margin-right: 8px;
+    }
+
+    .lb-item .score {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+    }
+  </style>
 </head>
-<body class="min-h-screen flex flex-col justify-between p-3 sm:p-5 select-none">
+<body>
 
-    <!-- ВЕРХНЯ ПАНЕЛЬ (НАВІГАЦІЯ ТА НАЛАШТУВАННЯ) -->
-    <header class="w-full max-w-xl mx-auto flex items-center justify-between gap-2 bg-surface-800/90 backdrop-blur-md border border-white/10 rounded-[24px] px-4 py-3 shadow-lg">
-        <!-- Логотип та назва -->
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-2xl bg-f1-red/15 border border-f1-red/40 flex items-center justify-center shadow-inner">
-                <!-- Схематична SVG іконка пелюстки/керма -->
-                <svg class="w-6 h-6 text-f1-red" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 9h16M4 15h16M7 5h10a3 3 0 013 3v8a3 3 0 01-3 3H7a3 3 0 01-3-3V8a3 3 0 013-3z" />
-                    <circle cx="9" cy="12" r="1.2" fill="currentColor"/>
-                    <circle cx="15" cy="12" r="1.2" fill="currentColor"/>
-                </svg>
-            </div>
-            <div>
-                <div class="flex items-center gap-2">
-                    <h1 class="font-extrabold tracking-tight text-base sm:text-lg text-white leading-none">BITE POINT</h1>
-                    <span class="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-white/10 text-gray-300 font-semibold">FIA Spec</span>
-                </div>
-                <p class="text-xs text-gray-400 mt-0.5">Тест реакції старту Ф1</p>
-            </div>
-        </div>
-
-        <!-- Перемикачі Звуку, Вібро та Імені пілота -->
-        <div class="flex items-center gap-1.5 sm:gap-2">
-            <!-- Вибір пілота -->
-            <button id="driverBtn" class="flex items-center gap-1.5 bg-surface-700 hover:bg-surface-600 active:scale-95 transition px-3 py-2 rounded-2xl border border-white/10 text-xs font-mono font-bold text-white" title="Змінити тег пілота">
-                <span class="w-2 h-2 rounded-full bg-f1-cyan"></span>
-                <span id="currentDriverDisplay">VER</span>
-                <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-            </button>
-
-            <!-- Кнопка звуку -->
-            <button id="soundToggleBtn" class="p-2.5 rounded-2xl bg-surface-700 hover:bg-surface-600 active:scale-95 transition border border-white/10 text-f1-green" title="Звук Увімк/Вимк">
-                <svg id="soundIconOn" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
-                </svg>
-                <svg id="soundIconOff" class="w-5 h-5 hidden text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15zM17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/>
-                </svg>
-            </button>
-
-            <!-- Кнопка вібрації -->
-            <button id="hapticToggleBtn" class="p-2.5 rounded-2xl bg-surface-700 hover:bg-surface-600 active:scale-95 transition border border-white/10 text-f1-cyan" title="Вібрація Увімк/Вимк">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2zM4 8v8M2 10v4M20 8v8M22 10v4"/>
-                </svg>
-            </button>
-        </div>
-    </header>
-
-    <!-- ОСНОВНИЙ ІГРОВИЙ КОНТЕЙНЕР -->
-    <main class="w-full max-w-xl mx-auto flex-1 flex flex-col justify-between gap-3 my-3">
-
-        <!-- 1. СТАРТОВА БАЛКА СВІТЛОФОРА Ф1 (F1 LIGHT GANTRY) -->
-        <section class="relative bg-surface-800 border border-white/10 rounded-[28px] p-3.5 sm:p-5 shadow-2xl overflow-hidden">
-            <!-- Металева балка кріплення (декоративна SVG-лінія позаду) -->
-            <div class="absolute inset-x-0 top-1/2 -translate-y-1/2 h-3 bg-gradient-to-r from-surface-950 via-surface-600 to-surface-950 opacity-50 pointer-events-none"></div>
-
-            <!-- 5 секцій світлофора -->
-            <div class="relative z-10 grid grid-cols-5 gap-2 sm:gap-4 max-w-md mx-auto">
-                <!-- Генеруємо 5 колонок: у кожній 1 жовта (Abort) + 2 великі червоні лампи -->
-                <div class="pod carbon-housing rounded-2xl p-2 sm:p-3 border border-white/10 shadow-xl flex flex-col items-center gap-2 sm:gap-2.5" data-pod="0">
-                    <div class="f1-led-amber w-4 h-4 sm:w-5 sm:h-5 rounded-full"></div>
-                    <div class="f1-led red-led w-10 h-10 sm:w-12 sm:h-12 rounded-full"></div>
-                    <div class="f1-led red-led w-10 h-10 sm:w-12 sm:h-12 rounded-full"></div>
-                </div>
-                <div class="pod carbon-housing rounded-2xl p-2 sm:p-3 border border-white/10 shadow-xl flex flex-col items-center gap-2 sm:gap-2.5" data-pod="1">
-                    <div class="f1-led-amber w-4 h-4 sm:w-5 sm:h-5 rounded-full"></div>
-                    <div class="f1-led red-led w-10 h-10 sm:w-12 sm:h-12 rounded-full"></div>
-                    <div class="f1-led red-led w-10 h-10 sm:w-12 sm:h-12 rounded-full"></div>
-                </div>
-                <div class="pod carbon-housing rounded-2xl p-2 sm:p-3 border border-white/10 shadow-xl flex flex-col items-center gap-2 sm:gap-2.5" data-pod="2">
-                    <div class="f1-led-amber w-4 h-4 sm:w-5 sm:h-5 rounded-full"></div>
-                    <div class="f1-led red-led w-10 h-10 sm:w-12 sm:h-12 rounded-full"></div>
-                    <div class="f1-led red-led w-10 h-10 sm:w-12 sm:h-12 rounded-full"></div>
-                </div>
-                <div class="pod carbon-housing rounded-2xl p-2 sm:p-3 border border-white/10 shadow-xl flex flex-col items-center gap-2 sm:gap-2.5" data-pod="3">
-                    <div class="f1-led-amber w-4 h-4 sm:w-5 sm:h-5 rounded-full"></div>
-                    <div class="f1-led red-led w-10 h-10 sm:w-12 sm:h-12 rounded-full"></div>
-                    <div class="f1-led red-led w-10 h-10 sm:w-12 sm:h-12 rounded-full"></div>
-                </div>
-                <div class="pod carbon-housing rounded-2xl p-2 sm:p-3 border border-white/10 shadow-xl flex flex-col items-center gap-2 sm:gap-2.5" data-pod="4">
-                    <div class="f1-led-amber w-4 h-4 sm:w-5 sm:h-5 rounded-full"></div>
-                    <div class="f1-led red-led w-10 h-10 sm:w-12 sm:h-12 rounded-full"></div>
-                    <div class="f1-led red-led w-10 h-10 sm:w-12 sm:h-12 rounded-full"></div>
-                </div>
-            </div>
-        </section>
-
-        <!-- 2. ДИСПЛЕЙ ТЕЛЕМЕТРІЇ НА КЕРМІ (STEERING WHEEL TELEMETRY DISPLAY) -->
-        <section class="bg-surface-800 border border-white/10 rounded-[28px] p-4 sm:p-5 shadow-xl flex flex-col justify-between gap-3">
-            
-            <!-- Рядок сегментів кваліфікації Q1 / Q2 / Q3 -->
-            <div class="grid grid-cols-3 gap-2">
-                <div id="stageCard0" class="bg-surface-900 border border-f1-cyan/50 rounded-2xl p-2.5 text-center transition-all">
-                    <div class="flex items-center justify-between text-[11px] font-mono text-gray-400 px-1">
-                        <span>ЕТAП</span>
-                        <span class="font-bold text-f1-cyan">Q1</span>
-                    </div>
-                    <div id="stageTime0" class="font-mono font-bold text-sm sm:text-base text-white mt-0.5">—.———</div>
-                </div>
-                <div id="stageCard1" class="bg-surface-900 border border-white/5 rounded-2xl p-2.5 text-center transition-all opacity-60">
-                    <div class="flex items-center justify-between text-[11px] font-mono text-gray-400 px-1">
-                        <span>ЕТAП</span>
-                        <span class="font-bold text-gray-300">Q2</span>
-                    </div>
-                    <div id="stageTime1" class="font-mono font-bold text-sm sm:text-base text-white mt-0.5">—.———</div>
-                </div>
-                <div id="stageCard2" class="bg-surface-900 border border-white/5 rounded-2xl p-2.5 text-center transition-all opacity-60">
-                    <div class="flex items-center justify-between text-[11px] font-mono text-gray-400 px-1">
-                        <span>ЕТAП</span>
-                        <span class="font-bold text-gray-300">Q3</span>
-                    </div>
-                    <div id="stageTime2" class="font-mono font-bold text-sm sm:text-base text-white mt-0.5">—.———</div>
-                </div>
-            </div>
-
-            <!-- Головне табло часу та статусу -->
-            <div class="relative bg-surface-950 border border-white/10 rounded-[22px] py-4 px-4 text-center flex flex-col items-center justify-center min-h-[138px]">
-                <!-- Статус-бейдж зверху -->
-                <div id="telemetryStatusBadge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold uppercase tracking-wider bg-white/10 text-gray-300 mb-1">
-                    <span id="statusDot" class="w-2 h-2 rounded-full bg-gray-400"></span>
-                    <span id="statusText">ГОТОВИЙ ДО СТАРТУ</span>
-                </div>
-
-                <!-- Величезний цифровий таймер -->
-                <div id="mainTimerDisplay" class="font-mono font-extrabold text-5xl sm:text-6xl tracking-tight text-white my-1 tabular-nums">
-                    0.000<span class="text-2xl sm:text-3xl text-gray-500 ml-1">с</span>
-                </div>
-
-                <!-- Вердикт / Порівняння з пілотами Ф1 -->
-                <div id="benchmarkBadge" class="text-xs sm:text-sm font-medium text-gray-400 min-h-[20px]">
-                    Затисни пелюстку зчеплення, щоб увімкнути світлофор
-                </div>
-            </div>
-
-            <!-- Підсумковий блок після 3 етапів (прихований за замовчуванням) -->
-            <div id="sessionSummaryBanner" class="hidden bg-gradient-to-r from-surface-900 via-surface-700 to-surface-900 border border-f1-cyan/40 rounded-2xl p-3 flex items-center justify-between">
-                <div>
-                    <div class="text-[11px] font-mono uppercase text-f1-cyan font-bold">ПІДСУМОК КВАЛІФІКАЦІЇ (Q1-Q3)</div>
-                    <div class="text-xs text-gray-300 mt-0.5">Середній час: <span id="summaryAvgTime" class="font-mono font-bold text-white">0.000 с</span></div>
-                </div>
-                <button id="resetSessionBtn" class="bg-f1-cyan text-surface-950 hover:bg-cyan-300 active:scale-95 transition font-bold text-xs px-4 py-2.5 rounded-xl shadow-md">
-                    Нова сесія ↻
-                </button>
-            </div>
-        </section>
-
-        <!-- 3. ПЕЛЮСТКА ЗЧЕПЛЕННЯ (CUSTOM SVG CLUTCH PADDLE BUTTON) -->
-        <section class="flex flex-col">
-            <div id="clutchPaddle" role="button" tabindex="0"
-                class="clutch-zone relative w-full min-h-[165px] sm:min-h-[185px] bg-gradient-to-b from-surface-700 to-surface-800 border-2 border-white/15 rounded-[28px] p-4 flex flex-col items-center justify-between shadow-2xl cursor-pointer overflow-hidden group">
-                
-                <!-- Схематичне SVG креслення пелюстки керма Ф1 на фоні -->
-                <svg class="w-full h-full absolute inset-0 pointer-events-none opacity-20" viewBox="0 0 400 180" fill="none">
-                    <!-- Технічні лінії телеметрії -->
-                    <path d="M 20 30 L 60 30 L 75 45 L 325 45 L 340 30 L 380 30" stroke="currentColor" stroke-width="1.5" stroke-dasharray="4 4" class="text-gray-400"/>
-                    <path d="M 20 150 L 60 150 L 75 135 L 325 135 L 340 150 L 380 150" stroke="currentColor" stroke-width="1.5" class="text-gray-400"/>
-                    <!-- Контур пелюстки (Clutch Paddle) -->
-                    <rect x="95" y="20" width="210" height="140" rx="22" stroke="currentColor" stroke-width="2" class="text-f1-cyan"/>
-                    <line x1="200" y1="10" x2="200" y2="170" stroke="currentColor" stroke-width="1" stroke-dasharray="3 5" class="text-gray-500"/>
-                    <circle cx="200" cy="90" r="38" stroke="currentColor" stroke-width="1.5" stroke-dasharray="6 4" class="text-f1-cyan"/>
-                    <!-- Кутові мітки прицілу -->
-                    <path d="M 30 65 L 30 45 L 50 45" stroke="currentColor" stroke-width="2.5" class="text-white"/>
-                    <path d="M 370 65 L 370 45 L 350 45" stroke="currentColor" stroke-width="2.5" class="text-white"/>
-                    <path d="M 30 115 L 30 135 L 50 135" stroke="currentColor" stroke-width="2.5" class="text-white"/>
-                    <path d="M 370 115 L 370 135 L 350 135" stroke="currentColor" stroke-width="2.5" class="text-white"/>
-                </svg>
-
-                <!-- Верхній рядок телеметрії пелюстки (Bite Point Bar) -->
-                <div class="relative z-10 w-full flex items-center justify-between text-xs font-mono text-gray-400 px-2">
-                    <span>CLUTCH BITE POINT</span>
-                    <span id="clutchPercentText" class="text-f1-cyan font-bold">0% ENGAGED</span>
-                </div>
-
-                <!-- Центральна підказка дії -->
-                <div class="relative z-10 flex flex-col items-center text-center my-auto py-2 pointer-events-none">
-                    <div id="clutchMainLabel" class="font-extrabold text-xl sm:text-2xl tracking-wide text-white uppercase">
-                        ЗАТИСНИ ТА ТРИМАЙ ЗЧЕПЛЕННЯ
-                    </div>
-                    <div id="clutchSubLabel" class="text-xs sm:text-sm text-gray-400 mt-1">
-                        Відпусти миттєво, коли згаснуть вогні (або клавіша Пробіл)
-                    </div>
-                </div>
-
-                <!-- Індикатор прогресу затискання / ліхтарів знизу пелюстки -->
-                <div class="relative z-10 w-full bg-surface-950 h-2.5 rounded-full overflow-hidden p-0.5 border border-white/10">
-                    <div id="clutchProgressBar" class="h-full w-0 bg-gradient-to-r from-f1-cyan via-f1-green to-f1-red rounded-full transition-all duration-150"></div>
-                </div>
-            </div>
-        </section>
-
-        <!-- 4. ЛОКАЛЬНА ТАБЛИЦЯ ЛІДЕРІВ (LEADERBOARD) -->
-        <section class="bg-surface-800 border border-white/10 rounded-[28px] p-4 shadow-xl">
-            <div class="flex items-center justify-between mb-3">
-                <div class="flex items-center gap-2">
-                    <svg class="w-5 h-5 text-f1-amber" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                    </svg>
-                    <h2 class="font-bold text-sm sm:text-base text-white">Таблиця лідерів (Топ сесій Q1–Q3)</h2>
-                </div>
-                <button id="clearLeaderboardBtn" class="text-xs text-gray-400 hover:text-f1-red transition px-2 py-1 rounded-lg">
-                    Очистити
-                </button>
-            </div>
-
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="border-b border-white/10 text-[11px] font-mono text-gray-400 uppercase">
-                            <th class="py-2 px-2">#</th>
-                            <th class="py-2 px-2">Пілот</th>
-                            <th class="py-2 px-2">Середній</th>
-                            <th class="py-2 px-2 hidden sm:table-cell">Q1 / Q2 / Q3</th>
-                            <th class="py-2 px-2 text-right">Найкращий</th>
-                        </tr>
-                    </thead>
-                    <tbody id="leaderboardBody" class="text-xs sm:text-sm font-mono divide-y divide-white/5">
-                        <!-- Заповнюється динамічно з localStorage -->
-                    </tbody>
-                </table>
-            </div>
-        </section>
-
-    </main>
-
-    <!-- МОДАЛЬНЕ ВІКНО ВИБОРУ ІМЕНІ ПІЛОТА (Замість alert/prompt) -->
-    <div id="driverModal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="bg-surface-800 border border-white/15 rounded-[28px] max-w-sm w-full p-5 shadow-2xl">
-            <h3 class="text-lg font-bold text-white mb-1">Профіль пілота</h3>
-            <p class="text-xs text-gray-400 mb-4">Обери абревіатуру Ф1 або введи своє ім'я для таблиці лідерів:</p>
-            
-            <!-- Швидкі теги Ф1 -->
-            <div class="flex flex-wrap gap-1.5 mb-4">
-                <button type="button" class="preset-tag px-3 py-1.5 rounded-xl bg-surface-700 hover:bg-surface-600 text-xs font-mono font-bold text-white border border-white/10" data-tag="VER">VER</button>
-                <button type="button" class="preset-tag px-3 py-1.5 rounded-xl bg-surface-700 hover:bg-surface-600 text-xs font-mono font-bold text-white border border-white/10" data-tag="NOR">NOR</button>
-                <button type="button" class="preset-tag px-3 py-1.5 rounded-xl bg-surface-700 hover:bg-surface-600 text-xs font-mono font-bold text-white border border-white/10" data-tag="LEC">LEC</button>
-                <button type="button" class="preset-tag px-3 py-1.5 rounded-xl bg-surface-700 hover:bg-surface-600 text-xs font-mono font-bold text-white border border-white/10" data-tag="HAM">HAM</button>
-                <button type="button" class="preset-tag px-3 py-1.5 rounded-xl bg-surface-700 hover:bg-surface-600 text-xs font-mono font-bold text-white border border-white/10" data-tag="ALO">ALO</button>
-                <button type="button" class="preset-tag px-3 py-1.5 rounded-xl bg-surface-700 hover:bg-surface-600 text-xs font-mono font-bold text-white border border-white/10" data-tag="BOT">BOT</button>
-            </div>
-
-            <input id="driverNameInput" type="text" maxlength="12" placeholder="Ім'я або тег (напр. ALEX)" 
-                class="w-full bg-surface-950 border border-white/15 rounded-2xl px-4 py-3 text-white font-mono text-sm focus:outline-none focus:border-f1-cyan mb-4 uppercase"/>
-
-            <div class="flex justify-end gap-2">
-                <button id="closeDriverModalBtn" class="px-4 py-2.5 rounded-xl bg-surface-700 text-gray-300 text-xs font-semibold">Скасувати</button>
-                <button id="saveDriverModalBtn" class="px-5 py-2.5 rounded-xl bg-f1-cyan text-surface-950 text-xs font-bold">Зберегти</button>
-            </div>
-        </div>
+  <div class="app-container">
+    <!-- Top Bar with Quick Player Selection -->
+    <div class="top-bar">
+      <div class="app-title">● Bite Point</div>
+      <div class="driver-selector" id="driverChips">
+        <button class="chip active" data-driver="P1">P1</button>
+        <button class="chip" data-driver="P2">P2</button>
+        <button class="chip" data-driver="P3">P3</button>
+        <button class="chip" id="customDriverBtn">+ Ім'я</button>
+      </div>
     </div>
 
-    <script>
-        /**
-         * BITE POINT // F1 Start Reaction Game
-         * Архітектура: Скінченний автомат (State Machine) + Web Audio API + Web Vibration API
-         */
+    <!-- Minimalist Capsule Lights -->
+    <div class="lights-card" id="lightsCard">
+      <div class="light-pill"></div>
+      <div class="light-pill"></div>
+      <div class="light-pill"></div>
+      <div class="light-pill"></div>
+      <div class="light-pill"></div>
+    </div>
 
-        // Стани гри
-        const STATE = {
-            IDLE: 'IDLE',               // Очікування затискання зчеплення
-            STAGING: 'STAGING',         // Почергове вмикання 5 червоних секцій (по 1000 мс)
-            HOLD_RANDOM: 'HOLD_RANDOM', // Усі 5 горять, випадкова пауза 0.2 - 3.0 сек
-            LIGHTS_OUT: 'LIGHTS_OUT',   // Вогні згасли! Відлік пішов
-            SESSION_DONE: 'SESSION_DONE'// Завершено всі 3 етапи (Q1, Q2, Q3)
-        };
+    <!-- Telemetry & Q1-Q3 Progress -->
+    <div class="telemetry-card">
+      <div class="status-badge" id="statusBadge">Готовий до старту</div>
+      <div class="main-timer" id="mainTimer">0.000<span class="unit">s</span></div>
+      
+      <div class="q-grid">
+        <div class="q-box current" id="qBox0">
+          <span class="q-label">СПРОБА 1</span>
+          <span class="q-val" id="qVal0">—</span>
+        </div>
+        <div class="q-box" id="qBox1">
+          <span class="q-label">СПРОБА 2</span>
+          <span class="q-val" id="qVal1">—</span>
+        </div>
+        <div class="q-box" id="qBox2">
+          <span class="q-label">СПРОБА 3</span>
+          <span class="q-val" id="qVal2">—</span>
+        </div>
+      </div>
+    </div>
 
-        // Поточна сесія
-        let gameState = STATE.IDLE;
-        let currentDriver = localStorage.getItem('f1_driver_name') || 'VER';
-        let currentStageIndex = 0; // 0 = Q1, 1 = Q2, 2 = Q3
-        let stageResults = [null, null, null]; // Час у мс для Q1, Q2, Q3
-        let stagePenalties = [false, false, false]; // Чи був фальстарт на етапі
+    <!-- Tactile Clutch Pad -->
+    <button class="clutch-pad" id="clutchPad">
+      <span class="clutch-title" id="clutchTitle">Затисни та тримай</span>
+      <span class="clutch-sub" id="clutchSub">Відпусти, коли капсули згаснуть</span>
+    </button>
 
-        // Таймери та часові мітки
-        let stagingTimeouts = [];
-        let randomHoldTimeout = null;
-        let lightsOutTimestamp = 0;
-        let isSpacebarHeld = false;
+    <!-- Local Leaderboard -->
+    <div class="leaderboard-card">
+      <div class="lb-header">
+        <span>Таблиця лідерів (Середній з 3)</span>
+        <button class="lb-clear" id="clearLbBtn">Очистити</button>
+      </div>
+      <div class="lb-list" id="lbList"></div>
+    </div>
+  </div>
 
-        // Налаштування звуку та вібро
-        let soundEnabled = true;
-        let hapticEnabled = true;
-        let audioCtx = null;
+  <script>
+    // --- Crisp Micro-Haptics Engine ---
+    const Haptics = {
+      tap() {
+        // Короткий сухий "стук" лінійного вібромотора
+        if ("vibrate" in navigator) navigator.vibrate(10);
+      },
+      lightTick() {
+        if ("vibrate" in navigator) navigator.vibrate(12);
+      },
+      release() {
+        // Подвійний мікро-імпульс при старті
+        if ("vibrate" in navigator) navigator.vibrate([8, 28, 12]);
+      },
+      fault() {
+        // Три швидких "стуки" замість довгого дзижчання
+        if ("vibrate" in navigator) navigator.vibrate([14, 45, 14, 45, 14]);
+      }
+    };
 
-        // DOM Елементи
-        const pods = document.querySelectorAll('.pod');
-        const allRedLeds = document.querySelectorAll('.red-led');
-        const allAmberLeds = document.querySelectorAll('.f1-led-amber');
-        
-        const mainTimerDisplay = document.getElementById('mainTimerDisplay');
-        const statusText = document.getElementById('statusText');
-        const statusDot = document.getElementById('statusDot');
-        const telemetryStatusBadge = document.getElementById('telemetryStatusBadge');
-        const benchmarkBadge = document.getElementById('benchmarkBadge');
-        
-        const clutchPaddle = document.getElementById('clutchPaddle');
-        const clutchMainLabel = document.getElementById('clutchMainLabel');
-        const clutchSubLabel = document.getElementById('clutchSubLabel');
-        const clutchPercentText = document.getElementById('clutchPercentText');
-        const clutchProgressBar = document.getElementById('clutchProgressBar');
+    // --- Pure Web Audio Synthesizer ---
+    let audioCtx = null;
+    function playTone(freq = 880, duration = 0.08, type = "sine") {
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === "suspended") audioCtx.resume();
 
-        const sessionSummaryBanner = document.getElementById('sessionSummaryBanner');
-        const summaryAvgTime = document.getElementById('summaryAvgTime');
-        const resetSessionBtn = document.getElementById('resetSessionBtn');
-        const leaderboardBody = document.getElementById('leaderboardBody');
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
 
-        // ==========================================
-        // 1. АУДІО СИНТЕЗАТОР (Web Audio API)
-        // ==========================================
-        function initAudio() {
-            if (!audioCtx) {
-                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-                if (AudioContextClass) {
-                    audioCtx = new AudioContextClass();
-                }
-            }
-            if (audioCtx && audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
+        gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    // --- State & Elements ---
+    const pills = document.querySelectorAll(".light-pill");
+    const statusBadge = document.getElementById("statusBadge");
+    const mainTimer = document.getElementById("mainTimer");
+    const clutchPad = document.getElementById("clutchPad");
+    const clutchTitle = document.getElementById("clutchTitle");
+    const clutchSub = document.getElementById("clutchSub");
+    const lbList = document.getElementById("lbList");
+
+    let state = "IDLE"; // IDLE, STAGING, HOLD_RANDOM, LIGHTS_OUT
+    let currentDriver = "P1";
+    let attempts = [];
+    let timers = [];
+    let lightsOutTimestamp = 0;
+
+    function clearAllTimers() {
+      timers.forEach(t => clearTimeout(t));
+      timers = [];
+    }
+
+    function resetLights() {
+      pills.forEach(p => p.classList.remove("on", "fault"));
+    }
+
+    function updateQBoxes() {
+      for (let i = 0; i < 3; i++) {
+        const box = document.getElementById(`qBox${i}`);
+        const val = document.getElementById(`qVal${i}`);
+        box.classList.toggle("current", i === attempts.length && attempts.length < 3);
+
+        if (attempts[i] !== undefined) {
+          val.textContent = attempts[i].fault
+            ? "+5.000s"
+            : `${(attempts[i].ms / 1000).toFixed(3)}s`;
+        } else {
+          val.textContent = "—";
         }
+      }
+    }
 
-        function playBeep(freq = 880, durationMs = 120, type = 'square', volume = 0.12) {
-            if (!soundEnabled) return;
-            try {
-                initAudio();
-                if (!audioCtx) return;
+    // --- Start Sequence (Hold) ---
+    function handleHoldStart(e) {
+      if (e.cancelable) e.preventDefault();
+      if (state !== "IDLE") return;
 
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
+      // Якщо попередня серія з 3 спроб завершена — очищаємо для нової
+      if (attempts.length >= 3) {
+        attempts = [];
+        updateQBoxes();
+      }
 
-                osc.type = type;
-                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+      Haptics.tap(); // Той самий приємний стук при натисканні
+      state = "STAGING";
+      resetLights();
 
-                gain.gain.setValueAtTime(volume, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + durationMs / 1000);
+      clutchPad.classList.add("holding");
+      clutchPad.classList.remove("go-state");
+      clutchTitle.textContent = "Тримай...";
+      clutchSub.textContent = "Чекай згасання всіх капсул";
+      statusBadge.className = "status-badge";
+      statusBadge.textContent = "Відлік старту";
+      mainTimer.innerHTML = `0.000<span class="unit">s</span>`;
 
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
+      // По черзі вмикаємо 5 капсул кожні 1000 мс
+      for (let i = 0; i < 5; i++) {
+        const t = setTimeout(() => {
+          pills[i].classList.add("on");
+          Haptics.lightTick();
+          playTone(860, 0.085, "sine");
 
-                osc.start();
-                osc.stop(audioCtx.currentTime + durationMs / 1000);
-            } catch (e) {
-                // Безпечний фолбек, якщо браузер блокує аудіо
-            }
-        }
-
-        function playJumpStartSound() {
-            if (!soundEnabled) return;
-            playBeep(210, 320, 'sawtooth', 0.16);
-            setTimeout(() => playBeep(165, 380, 'sawtooth', 0.16), 140);
-        }
-
-        function playCleanReleaseSound() {
-            if (!soundEnabled) return;
-            playBeep(1320, 90, 'sine', 0.15);
-        }
-
-        // ==========================================
-        // 2. ВІБРАЦІЯ (Web Vibration API)
-        // ==========================================
-        function triggerHaptic(pattern) {
-            if (!hapticEnabled) return;
-            try {
-                if ("vibrate" in navigator) {
-                    navigator.vibrate(pattern);
-                }
-            } catch (e) {
-                // Ігноруємо на пристроях без підтримки (iOS Safari)
-            }
-        }
-
-        // ==========================================
-        // 3. КЕРУВАННЯ СВІТЛОФОРОМ
-        // ==========================================
-        function clearAllTimers() {
-            stagingTimeouts.forEach(t => clearTimeout(t));
-            stagingTimeouts = [];
-            if (randomHoldTimeout) {
-                clearTimeout(randomHoldTimeout);
-                randomHoldTimeout = null;
-            }
-        }
-
-        function resetLights() {
-            allRedLeds.forEach(led => led.classList.remove('red-on'));
-            allAmberLeds.forEach(led => {
-                led.classList.remove('amber-on', 'amber-flashing');
-            });
-        }
-
-        function setPodRedLight(podIndex, isOn) {
-            const pod = pods[podIndex];
-            if (!pod) return;
-            const redLeds = pod.querySelectorAll('.red-led');
-            redLeds.forEach(led => {
-                if (isOn) led.classList.add('red-on');
-                else led.classList.remove('red-on');
-            });
-        }
-
-        function flashAbortLights() {
-            allRedLeds.forEach(led => led.classList.remove('red-on'));
-            allAmberLeds.forEach(led => {
-                led.classList.add('amber-on', 'amber-flashing');
-            });
-        }
-
-        // ==========================================
-        // 4. ОСНОВНИЙ ІГРОВИЙ ЦИКЛ (HOLD & RELEASE)
-        // ==========================================
-        function handleClutchPress(e) {
-            if (e && e.cancelable && e.type !== 'keydown') {
-                e.preventDefault();
-            }
-
-            // Якщо сесія з 3 етапів завершена, тап по пелюстці починає нову сесію
-            if (gameState === STATE.SESSION_DONE) {
-                resetQualifyingSession();
-                return;
-            }
-
-            if (gameState !== STATE.IDLE) return;
-
-            initAudio();
-            triggerHaptic(15); // Короткий тактильний клік при затисканні
-
-            gameState = STATE.STAGING;
-            resetLights();
-
-            // Візуальний стан затиснутої пелюстки
-            clutchPaddle.classList.add('pressed', 'border-f1-red/60');
-            clutchPercentText.textContent = '100% BITE POINT';
-            clutchProgressBar.style.width = '20%';
-            clutchMainLabel.textContent = 'ТРИМАЙ ЗЧЕПЛЕННЯ...';
-            clutchSubLabel.textContent = 'Чекай, поки всі 5 ліхтарів згаснуть!';
-
-            updateStatusUI('STAGING // ВІДЛІК СТАРТУ', 'bg-f1-red', 'text-red-300');
-            mainTimerDisplay.innerHTML = `0.000<span class="text-2xl sm:text-3xl text-gray-500 ml-1">с</span>`;
-            benchmarkBadge.textContent = 'Увага на стартову балку...';
-
-            // Запалюємо 5 червоних секцій рівно через 1000 мс кожну
-            for (let i = 0; i < 5; i++) {
-                const timeoutId = setTimeout(() => {
-                    setPodRedLight(i, true);
-                    playBeep(880, 120, 'square', 0.12);
-                    triggerHaptic(35);
-                    clutchProgressBar.style.width = `${(i + 1) * 20}%`;
-
-                    // Коли запалився 5-й ліхтар -> переходимо у фазу випадкової затримки
-                    if (i === 4) {
-                        enterHoldRandomPhase();
-                    }
-                }, (i + 1) * 1000);
-
-                stagingTimeouts.push(timeoutId);
-            }
-        }
-
-        function enterHoldRandomPhase() {
-            gameState = STATE.HOLD_RANDOM;
-            updateStatusUI('5 LIGHTS ON // ПРИГОТУВАТИСЯ', 'bg-f1-red', 'text-red-200');
-
-            // Випадкова затримка FIA: від 200 мс до 3000 мс
-            const randomDelay = Math.floor(Math.random() * (3000 - 200 + 1)) + 200;
-
-            randomHoldTimeout = setTimeout(() => {
-                triggerLightsOut();
+          // Коли засвітилась 5-та капсула — чекаємо рандом (0.2 - 3.0 сек)
+          if (i === 4) {
+            state = "HOLD_RANDOM";
+            const randomDelay = Math.floor(Math.random() * 2800) + 200;
+            const outTimer = setTimeout(() => {
+              resetLights();
+              state = "LIGHTS_OUT";
+              lightsOutTimestamp = performance.now();
+              clutchPad.classList.add("go-state");
+              clutchTitle.textContent = "ВІДПУСКАЙ!";
+              statusBadge.textContent = "СТАРТ!";
             }, randomDelay);
-        }
+            timers.push(outTimer);
+          }
+        }, (i + 1) * 900);
+        timers.push(t);
+      }
+    }
 
-        function triggerLightsOut() {
-            gameState = STATE.LIGHTS_OUT;
-            resetLights(); // Миттєво гасимо всі 5 ліхтарів!
-            lightsOutTimestamp = performance.now();
+    // --- Release Sequence ---
+    function handleRelease(e) {
+      if (e && e.cancelable) e.preventDefault();
+      if (state === "IDLE") return;
 
-            updateStatusUI("LIGHTS OUT // ВІДПУСКАЙ!", 'bg-f1-green', 'text-f1-green');
-            clutchMainLabel.textContent = 'ВІДПУСКАЙ ЗАРАЗ!';
-            clutchSubLabel.textContent = 'GO! GO! GO!';
-        }
+      clutchPad.classList.remove("holding", "go-state");
 
-        function handleClutchRelease(e) {
-            if (e && e.cancelable && e.type !== 'keyup') {
-                e.preventDefault();
-            }
+      // Якщо відпустив до того, як згасли капсули -> ФАЛЬСТАРТ
+      if (state === "STAGING" || state === "HOLD_RANDOM") {
+        clearAllTimers();
+        state = "IDLE";
+        Haptics.fault();
+        playTone(220, 0.26, "triangle");
 
-            if (gameState === STATE.IDLE || gameState === STATE.SESSION_DONE) return;
-
-            // Повертаємо пелюстку у відпущений стан
-            clutchPaddle.classList.remove('pressed', 'border-f1-red/60');
-            clutchPercentText.textContent = '0% ENGAGED';
-            clutchProgressBar.style.width = '0%';
-
-            // Перевірка на ФАЛЬСТАРТ (відпустив під час STAGING або HOLD_RANDOM)
-            if (gameState === STATE.STAGING || gameState === STATE.HOLD_RANDOM) {
-                clearAllTimers();
-                handleJumpStartPenalty();
-                return;
-            }
-
-            // Чистий старт після того, як ліхтарі згасли
-            if (gameState === STATE.LIGHTS_OUT) {
-                const releaseTime = performance.now();
-                const reactionMs = Math.max(1, Math.round(releaseTime - lightsOutTimestamp));
-                handleValidStart(reactionMs);
-            }
-        }
-
-        // ==========================================
-        // 5. ОБРОБКА РЕЗУЛЬТАТІВ ТА ШТРАФІВ (+5 СЕК)
-        // ==========================================
-        function handleJumpStartPenalty() {
-            flashAbortLights();
-            playJumpStartSound();
-            triggerHaptic([150, 80, 250]); // Важкий подвійний вібро-імпульс штрафу
-
-            const penaltyMs = 5000; // +5.000 секунд штрафу
-            stageResults[currentStageIndex] = penaltyMs;
-            stagePenalties[currentStageIndex] = true;
-
-            mainTimerDisplay.innerHTML = `<span class="text-f1-amber">+5.000</span><span class="text-2xl sm:text-3xl text-f1-amber ml-1">с</span>`;
-            updateStatusUI('ФАЛЬСТАРТ // JUMP START (+5s)', 'bg-f1-amber', 'text-f1-amber');
-            benchmarkBadge.innerHTML = `<span class="text-f1-amber font-semibold">Штраф +5.000 с!</span> Зчеплення відпущено до згасання вогнів.`;
-
-            recordStageAndAdvance();
-        }
-
-        function handleValidStart(reactionMs) {
-            playCleanReleaseSound();
-            triggerHaptic([25, 40, 50]);
-
-            stageResults[currentStageIndex] = reactionMs;
-            stagePenalties[currentStageIndex] = false;
-
-            const formattedSec = (reactionMs / 1000).toFixed(3);
-            mainTimerDisplay.innerHTML = `${formattedSec}<span class="text-2xl sm:text-3xl text-gray-400 ml-1">с</span>`;
-
-            // Оцінка за стандартами Формули-1
-            const evaluation = evaluateReaction(reactionMs);
-            updateStatusUI(evaluation.badge, evaluation.dotColor, evaluation.textColor);
-            benchmarkBadge.innerHTML = evaluation.description;
-
-            recordStageAndAdvance();
-        }
-
-        function evaluateReaction(ms) {
-            if (ms < 100) {
-                return {
-                    badge: 'ІНСТИНКТ БОТТАСА ⚡',
-                    dotColor: 'bg-f1-purple',
-                    textColor: 'text-f1-purple',
-                    description: `<span class="text-f1-purple font-bold">Межа людської фізіології (${ms} мс)!</span> Як Валттері Боттас у Австрії-2017.`
-                };
-            } else if (ms < 180) {
-                return {
-                    badge: 'ТОП ПІЛОТ Ф1 🏆',
-                    dotColor: 'bg-f1-purple',
-                    textColor: 'text-purple-300',
-                    description: `<span class="text-f1-green font-bold">Неймовірний старт (${ms} мс)!</span> Рівень праймового Ферстаппена та Алонсо.`
-                };
-            } else if (ms <= 230) {
-                return {
-                    badge: 'РІВЕНЬ ПЕЛОТОНУ Ф1 🏎️',
-                    dotColor: 'bg-f1-green',
-                    textColor: 'text-f1-green',
-                    description: `<span class="text-white font-semibold">Стабільний старт (${ms} мс).</span> Стандартна реакція пілота Гран-прі.`
-                };
-            } else if (ms <= 300) {
-                return {
-                    badge: 'ПОВІЛЬНИЙ СТАРТ ⚠️',
-                    dotColor: 'bg-f1-amber',
-                    textColor: 'text-f1-amber',
-                    description: `<span class="text-gray-300">Підбуксовка на старті (${ms} мс).</span> Втрачено 1–2 позиції до першого повороту.`
-                };
-            } else {
-                return {
-                    badge: 'ПРОСПАВ СТАРТ 🐢',
-                    dotColor: 'bg-gray-400',
-                    textColor: 'text-gray-300',
-                    description: `<span class="text-gray-400">Спрацювала система Anti-Stall (${ms} мс).</span> Пелотон вже проїхав повз.`
-                };
-            }
-        }
-
-        function recordStageAndAdvance() {
-            updateStageCardsUI();
-
-            if (currentStageIndex < 2) {
-                currentStageIndex++;
-                gameState = STATE.IDLE;
-                updateStageCardsUI();
-                clutchMainLabel.textContent = `ЗАТИСНИ ДЛЯ СТАРТУ Q${currentStageIndex + 1}`;
-                clutchSubLabel.textContent = `Етап ${currentStageIndex + 1} з 3 • Тримай палець до згасання`;
-            } else {
-                // Усі 3 етапи (Q1, Q2, Q3) завершено
-                finishQualifyingSession();
-            }
-        }
-
-        function updateStageCardsUI() {
-            for (let i = 0; i < 3; i++) {
-                const card = document.getElementById(`stageCard${i}`);
-                const timeEl = document.getElementById(`stageTime${i}`);
-
-                // Активна картка
-                if (i === currentStageIndex && gameState !== STATE.SESSION_DONE) {
-                    card.className = 'bg-surface-900 border border-f1-cyan/70 rounded-2xl p-2.5 text-center transition-all shadow-md';
-                } else {
-                    card.className = 'bg-surface-900 border border-white/10 rounded-2xl p-2.5 text-center transition-all opacity-80';
-                }
-
-                // Значення часу
-                if (stageResults[i] !== null) {
-                    if (stagePenalties[i]) {
-                        timeEl.innerHTML = `<span class="text-f1-amber">+5.000 с</span>`;
-                    } else {
-                        const sec = (stageResults[i] / 1000).toFixed(3);
-                        timeEl.innerHTML = `<span class="text-f1-green">${sec} с</span>`;
-                    }
-                } else {
-                    timeEl.textContent = '—.———';
-                }
-            }
-        }
-
-        function finishQualifyingSession() {
-            gameState = STATE.SESSION_DONE;
-            updateStageCardsUI();
-
-            const totalMs = stageResults.reduce((acc, val) => acc + val, 0);
-            const avgMs = Math.round(totalMs / 3);
-            const bestMs = Math.min(...stageResults);
-
-            summaryAvgTime.textContent = `${(avgMs / 1000).toFixed(3)} с`;
-            sessionSummaryBanner.classList.remove('hidden');
-
-            clutchMainLabel.textContent = 'СЕСІЮ ЗАВЕРШЕНО! НАТИСНИ ДЛЯ НОВОЇ ГРИ';
-            clutchSubLabel.textContent = `Середній результат ${currentDriver}: ${(avgMs / 1000).toFixed(3)} с`;
-
-            saveSessionToLeaderboard({
-                driver: currentDriver,
-                avgMs,
-                bestMs,
-                stages: [...stageResults],
-                penalties: [...stagePenalties],
-                timestamp: Date.now()
-            });
-        }
-
-        function resetQualifyingSession() {
-            clearAllTimers();
-            resetLights();
-            gameState = STATE.IDLE;
-            currentStageIndex = 0;
-            stageResults = [null, null, null];
-            stagePenalties = [false, false, false];
-
-            sessionSummaryBanner.classList.add('hidden');
-            mainTimerDisplay.innerHTML = `0.000<span class="text-2xl sm:text-3xl text-gray-500 ml-1">с</span>`;
-            updateStatusUI('ГОТОВИЙ ДО СТАРТУ Q1', 'bg-gray-400', 'text-gray-300');
-            benchmarkBadge.textContent = 'Затисни пелюстку зчеплення, щоб увімкнути світлофор';
-            clutchMainLabel.textContent = 'ЗАТИСНИ ТА ТРИМАЙ ЗЧЕПЛЕННЯ';
-            clutchSubLabel.textContent = 'Відпусти миттєво, коли згаснуть вогні (або клавіша Пробіл)';
-            updateStageCardsUI();
-        }
-
-        function updateStatusUI(text, dotColorClass, textColorClass) {
-            statusText.textContent = text;
-            statusText.className = textColorClass;
-            statusDot.className = `w-2 h-2 rounded-full ${dotColorClass}`;
-        }
-
-        // ==========================================
-        // 6. ТАБЛИЦЯ ЛІДЕРІВ (localStorage)
-        // ==========================================
-        function getLeaderboard() {
-            try {
-                const raw = localStorage.getItem('f1_bitepoint_leaderboard');
-                return raw ? JSON.parse(raw) : [];
-            } catch (e) {
-                return [];
-            }
-        }
-
-        function saveSessionToLeaderboard(entry) {
-            const list = getLeaderboard();
-            list.push(entry);
-            // Сортуємо за середнім часом (менше = краще)
-            list.sort((a, b) => a.avgMs - b.avgMs);
-            const top15 = list.slice(0, 15);
-            try {
-                localStorage.setItem('f1_bitepoint_leaderboard', JSON.stringify(top15));
-            } catch (e) {}
-            renderLeaderboard();
-        }
-
-        function renderLeaderboard() {
-            const list = getLeaderboard();
-            leaderboardBody.innerHTML = '';
-
-            if (list.length === 0) {
-                leaderboardBody.innerHTML = `
-                    <tr>
-                        <td colspan="5" class="py-4 text-center text-gray-500 font-sans text-xs">
-                            Поки немає записів. Проїдь 3 старти (Q1–Q3), щоб потрапити в протокол!
-                        </td>
-                    </tr>
-                `;
-                return;
-            }
-
-            list.forEach((item, idx) => {
-                const rankBadge = idx === 0 
-                    ? `<span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-f1-amber/20 text-f1-amber font-bold">1</span>`
-                    : `<span class="text-gray-400 pl-1.5">${idx + 1}</span>`;
-
-                const stagesFormatted = item.stages.map((ms, sIdx) => {
-                    return item.penalties && item.penalties[sIdx]
-                        ? `<span class="text-f1-amber">+5.0s</span>`
-                        : `${(ms / 1000).toFixed(3)}`;
-                }).join(' <span class="text-gray-600">/</span> ');
-
-                const bestFormatted = item.bestMs >= 5000 
-                    ? `<span class="text-f1-amber">+5.000 с</span>` 
-                    : `${(item.bestMs / 1000).toFixed(3)} с`;
-
-                const tr = document.createElement('tr');
-                tr.className = 'hover:bg-white/5 transition';
-                tr.innerHTML = `
-                    <td class="py-2.5 px-2">${rankBadge}</td>
-                    <td class="py-2.5 px-2 font-bold text-white">${item.driver}</td>
-                    <td class="py-2.5 px-2 font-bold text-f1-cyan">${(item.avgMs / 1000).toFixed(3)} с</td>
-                    <td class="py-2.5 px-2 hidden sm:table-cell text-xs text-gray-400">${stagesFormatted}</td>
-                    <td class="py-2.5 px-2 text-right text-f1-green">${bestFormatted}</td>
-                `;
-                leaderboardBody.appendChild(tr);
-            });
-        }
-
-        // ==========================================
-        // 7. ОБРОБНИКИ ПОДІЙ (TOUCH, POINTER, KEYBOARD)
-        // ==========================================
-        clutchPaddle.addEventListener('pointerdown', handleClutchPress);
-        window.addEventListener('pointerup', (e) => {
-            if (gameState !== STATE.IDLE && gameState !== STATE.SESSION_DONE) {
-                handleClutchRelease(e);
-            }
-        });
-        clutchPaddle.addEventListener('contextmenu', e => e.preventDefault());
-
-        // Підтримка клавіші Пробіл для тесту з ноутбука/ПК
-        window.addEventListener('keydown', (e) => {
-            if (e.code === 'Space' && !isSpacebarHeld && document.getElementById('driverModal').classList.contains('hidden')) {
-                e.preventDefault();
-                isSpacebarHeld = true;
-                handleClutchPress(e);
-            }
+        pills.forEach(p => {
+          p.classList.remove("on");
+          p.classList.add("fault");
         });
 
-        window.addEventListener('keyup', (e) => {
-            if (e.code === 'Space' && isSpacebarHeld) {
-                e.preventDefault();
-                isSpacebarHeld = false;
-                handleClutchRelease(e);
-            }
-        });
+        statusBadge.className = "status-badge penalty";
+        statusBadge.textContent = "Фальстарт • Штраф +5с";
+        mainTimer.innerHTML = `+5.000<span class="unit">s</span>`;
+        recordAttempt(5000, true);
+      } 
+      // Чесний старт після згасання
+      else if (state === "LIGHTS_OUT") {
+        const reactionMs = Math.round(performance.now() - lightsOutTimestamp);
+        state = "IDLE";
+        Haptics.release();
+        playTone(1240, 0.11, "sine");
 
-        // Кнопки звуку та вібро
-        document.getElementById('soundToggleBtn').addEventListener('click', () => {
-            soundEnabled = !soundEnabled;
-            document.getElementById('soundIconOn').classList.toggle('hidden', !soundEnabled);
-            document.getElementById('soundIconOff').classList.toggle('hidden', soundEnabled);
-            if (soundEnabled) playBeep(880, 70, 'sine', 0.1);
-        });
+        mainTimer.innerHTML = `${(reactionMs / 1000).toFixed(3)}<span class="unit">s</span>`;
+        statusBadge.className = "status-badge good";
+        statusBadge.textContent = getVerdict(reactionMs);
+        recordAttempt(reactionMs, false);
+      }
 
-        document.getElementById('hapticToggleBtn').addEventListener('click', (e) => {
-            hapticEnabled = !hapticEnabled;
-            e.currentTarget.classList.toggle('text-f1-cyan', hapticEnabled);
-            e.currentTarget.classList.toggle('text-gray-500', !hapticEnabled);
-            if (hapticEnabled) triggerHaptic(30);
-        });
+      clutchTitle.textContent = attempts.length >= 3 ? "Нова серія (Затисни)" : "Затисни та тримай";
+      clutchSub.textContent = "Відпусти, коли капсули згаснуть";
+    }
 
-        resetSessionBtn.addEventListener('click', resetQualifyingSession);
+    function getVerdict(ms) {
+      if (ms < 150) return "Кібер-реакція ⚡";
+      if (ms < 210) return "Рівень пілота Ф1 🔥";
+      if (ms < 270) return "Солідний старт 👍";
+      return "Трохи проспав старт 🐢";
+    }
 
-        document.getElementById('clearLeaderboardBtn').addEventListener('click', () => {
-            localStorage.removeItem('f1_bitepoint_leaderboard');
-            renderLeaderboard();
-        });
+    function recordAttempt(ms, fault) {
+      attempts.push({ ms, fault });
+      updateQBoxes();
 
-        // Модальне вікно вибору імені пілота
-        const driverModal = document.getElementById('driverModal');
-        const driverNameInput = document.getElementById('driverNameInput');
-        const currentDriverDisplay = document.getElementById('currentDriverDisplay');
+      if (attempts.length === 3) {
+        const avgMs = Math.round(attempts.reduce((acc, a) => acc + a.ms, 0) / 3);
+        saveToLeaderboard(currentDriver, avgMs);
+        setTimeout(() => {
+          statusBadge.textContent = `Серія завершена • Сер: ${(avgMs / 1000).toFixed(3)}s`;
+        }, 600);
+      }
+    }
 
-        currentDriverDisplay.textContent = currentDriver;
+    // --- Leaderboard Logic ---
+    function getLeaderboard() {
+      try {
+        return JSON.parse(localStorage.getItem("bitepoint_md3_lb") || "[]");
+      } catch {
+        return [];
+      }
+    }
 
-        document.getElementById('driverBtn').addEventListener('click', () => {
-            driverNameInput.value = currentDriver;
-            driverModal.classList.remove('hidden');
-            driverNameInput.focus();
-        });
+    function saveToLeaderboard(driver, avgMs) {
+      const lb = getLeaderboard();
+      lb.push({ driver, avgMs, date: Date.now() });
+      lb.sort((a, b) => a.avgMs - b.avgMs);
+      localStorage.setItem("bitepoint_md3_lb", JSON.stringify(lb.slice(0, 10)));
+      renderLeaderboard();
+    }
 
-        document.querySelectorAll('.preset-tag').forEach(btn => {
-            btn.addEventListener('click', () => {
-                driverNameInput.value = btn.dataset.tag;
-            });
-        });
+    function renderLeaderboard() {
+      const lb = getLeaderboard();
+      if (lb.length === 0) {
+        lbList.innerHTML = `<div style="color: var(--md-text-dim); font-size: 0.82rem; text-align:center; padding: 8px;">Поки немає результатів — проїдь 3 спроби</div>`;
+        return;
+      }
+      lbList.innerHTML = lb.map((item, idx) => `
+        <div class="lb-item">
+          <div><span class="rank">#${idx + 1}</span><span>${item.driver}</span></div>
+          <div class="score">${(item.avgMs / 1000).toFixed(3)}s</div>
+        </div>
+      `).join("");
+    }
 
-        document.getElementById('closeDriverModalBtn').addEventListener('click', () => {
-            driverModal.classList.add('hidden');
-        });
+    // --- Event Listeners ---
+    clutchPad.addEventListener("pointerdown", handleHoldStart);
+    window.addEventListener("pointerup", handleRelease);
+    window.addEventListener("pointercancel", handleRelease);
+    window.addEventListener("contextmenu", e => e.preventDefault());
 
-        document.getElementById('saveDriverModalBtn').addEventListener('click', () => {
-            const val = driverNameInput.value.trim().toUpperCase();
-            if (val) {
-                currentDriver = val.slice(0, 12);
-                localStorage.setItem('f1_driver_name', currentDriver);
-                currentDriverDisplay.textContent = currentDriver;
-            }
-            driverModal.classList.add('hidden');
-        });
+    // Підтримка Пробілу для тесту з ноутбука
+    window.addEventListener("keydown", e => {
+      if (e.code === "Space" && !e.repeat) handleHoldStart(e);
+    });
+    window.addEventListener("keyup", e => {
+      if (e.code === "Space") handleRelease(e);
+    });
 
-        // Ініціалізація при завантаженні
-        window.onload = () => {
-            updateStageCardsUI();
-            renderLeaderboard();
-        };
-    </script>
+    // Перемикання гравців ( чіпси зверху )
+    document.getElementById("driverChips").addEventListener("click", e => {
+      const btn = e.target.closest(".chip");
+      if (!btn) return;
+
+      Haptics.tap();
+      if (btn.id === "customDriverBtn") {
+        const name = prompt("Введи ім'я або нік (до 8 символів):", currentDriver);
+        if (name && name.trim()) {
+          currentDriver = name.trim().slice(0, 8).toUpperCase();
+          btn.textContent = currentDriver;
+        }
+      } else {
+        currentDriver = btn.dataset.driver;
+      }
+
+      document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
+      btn.classList.add("active");
+      attempts = [];
+      updateQBoxes();
+    });
+
+    document.getElementById("clearLbBtn").addEventListener("click", () => {
+      Haptics.tap();
+      localStorage.removeItem("bitepoint_md3_lb");
+      renderLeaderboard();
+    });
+
+    renderLeaderboard();
+  </script>
 </body>
 </html>
