@@ -6,7 +6,7 @@
   <title>Bite Point</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -14,7 +14,10 @@
   <div class="app-container">
     <!-- Верхня панель -->
     <div class="top-bar">
-      <div class="app-title">● Bite Point</div>
+      <div class="app-title">
+        <span class="live-dot" id="netStatusDot" title="Статус мережі"></span>
+        <span>Bite Point</span>
+      </div>
       <div class="top-actions">
         <button class="player-pill" id="openNameModalBtn">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -35,7 +38,7 @@
       <div class="light-pill"></div>
     </div>
 
-    <!-- Телеметрія та Сектори (Спроби 1-3) -->
+    <!-- Телеметрія та Сектори -->
     <div class="telemetry-card">
       <div class="status-badge" id="statusBadge">Готовий до старту</div>
       <div class="main-timer" id="mainTimer">0.000<span class="unit">s</span></div>
@@ -62,38 +65,37 @@
       <span class="clutch-sub" id="clutchSub">Відпусти, коли капсули згаснуть</span>
     </button>
 
-    <!-- Компактна картка найкращого результату + кнопка історії -->
+    <!-- Компактна плашка лідера + кнопка Класифікації -->
     <div class="best-summary-card">
       <div class="best-info">
-        <span class="best-label">Лідер сесії (Середній з 3)</span>
+        <span class="best-label">Поул-позиція • Свій кращий</span>
         <div class="best-driver-row" id="bestRecordDisplay">
           <span class="no-record">Поки немає результатів</span>
         </div>
       </div>
       <button class="history-btn" id="openHistoryModalBtn">
-        <span>Історія</span>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg>
+        <span>Таблиця</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
       </button>
     </div>
   </div>
 
-  <!-- МОДАЛКА 1: Вибір гравця -->
+  <!-- МОДАЛКА 1: Профіль пілота (прив'язаний до пристрою) -->
   <div class="modal-backdrop" id="nameModal">
     <div class="modal-card">
-      <div class="modal-title">Хто зараз за кермом?</div>
-      <div class="modal-sub">Введи ім'я або обери зі списку друзів для нової серії з 3 стартів.</div>
+      <div class="modal-title">Твій позивний</div>
+      <div class="modal-sub">Ім'я прив'язується до цього пристрою. Твій найкращий рекорд зберігається назавжди, а поточний — до закриття вкладки.</div>
       
       <input type="text" class="md-input" id="driverNameInput" maxlength="12" placeholder="Ім'я або нік..." autocomplete="off" />
-      <div class="recent-chips" id="recentDriversContainer"></div>
 
       <div class="modal-actions">
         <button class="md-btn text" id="cancelNameBtn">Скасувати</button>
-        <button class="md-btn filled" id="saveNameBtn">Обрати</button>
+        <button class="md-btn filled" id="saveNameBtn">Зберегти</button>
       </div>
     </div>
   </div>
 
-  <!-- МОДАЛКА 2: Налаштування тактильного стуку -->
+  <!-- МОДАЛКА 2: Налаштування стуку -->
   <div class="modal-backdrop" id="hapticModal">
     <div class="modal-card">
       <div class="modal-title">Режим тактильного стуку</div>
@@ -121,21 +123,21 @@
     </div>
   </div>
 
-  <!-- МОДАЛКА 3: Повна історія та Таблиця лідерів -->
+  <!-- МОДАЛКА 3: F1 QUALIFYING CLASSIFICATION (Діаграма Топ-3 + Список) -->
   <div class="modal-backdrop" id="historyModal">
     <div class="modal-card modal-large">
       <div class="modal-header-row">
-        <div class="modal-title">Історія заїздів</div>
-        <button class="lb-clear" id="clearLbBtn">Очистити все</button>
+        <div>
+          <div class="f1-tag">QUALIFYING CLASSIFICATION</div>
+          <div class="modal-title">Таблиця лідерів</div>
+        </div>
+        <span class="session-pill" id="modeIndicatorPill">Локальний / Онлайн</span>
       </div>
 
-      <div class="legend-pills">
-        <span class="leg-pill purple">🟣 Рекорд</span>
-        <span class="leg-pill green">🟢 Свій топ</span>
-        <span class="leg-pill yellow">🟡 Повільніше</span>
-        <span class="leg-pill red">🔴 Штраф</span>
-      </div>
+      <!-- Діаграма Подіуму ТОП-3 (P2 - P1 - P3) -->
+      <div class="podium-stage" id="podiumStage"></div>
 
+      <!-- Список інших пілотів (P4+) та деталі поточного гравця -->
       <div class="history-list" id="fullHistoryList"></div>
 
       <div class="modal-actions">
@@ -144,6 +146,6 @@
     </div>
   </div>
 
-  <script src="app.js"></script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>

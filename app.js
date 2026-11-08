@@ -1,4 +1,153 @@
-// --- 1. Визначення підтримки вібрації ---
+// ============================================================================
+// 1. НАЛАШТУВАННЯ ОНЛАЙНУ (FIREBASE)
+// Щоб увімкнути глобальний онлайн між телефонами друзів:
+// Створи проект у console.firebase.google.com, увімкни Anonymous Auth
+// та Realtime Database, і встав свої ключі у firebaseConfig нижче.
+// Поки apiKey порожній — гра автоматично працює в локальному режимі.
+// ============================================================================
+const firebaseConfig = {
+  apiKey: "AIzaSyBWCeFOaiUBDi1NOcHee2lx0ypXH5fJKNA",
+  authDomain: "bite-point-f1.firebaseapp.com",
+  databaseURL: "https://bite-point-f1-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "bite-point-f1",
+  appId: "1:96026745122:web:1d6d7167a627f676486d7b"
+};
+
+// --- 2. Ідентифікація пристрою (1 пристрій = 1 акаунт) ---
+let deviceUid = localStorage.getItem("bp_device_uid");
+if (!deviceUid) {
+  deviceUid = "dev_" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+  localStorage.setItem("bp_device_uid", deviceUid);
+}
+
+let isOnlineConnected = false;
+let fbDb = null;
+let fbSet = null;
+let fbRef = null;
+
+// --- 3. Сесійний (поточний) результат, який автоматично зникає після закриття вкладки ---
+function getSessionCurrentRun() {
+  try {
+    return JSON.parse(sessionStorage.getItem("bp_session_current_run") || "null");
+  } catch {
+    return null;
+  }
+}
+
+function setSessionCurrentRun(avgMs, sectors) {
+  const data = { avgMs, sectors, timestamp: Date.now() };
+  sessionStorage.setItem("bp_session_current_run", JSON.stringify(data));
+  return data;
+}
+
+// --- 4. Підключення Firebase (якщо заданий конфіг) ---
+async function initCloudSync() {
+  const dot = document.getElementById("netStatusDot");
+  const modePill = document.getElementById("modeIndicatorPill");
+
+  if (!firebaseConfig.apiKey || !firebaseConfig.databaseURL) {
+    modePill.textContent = "Локальний режим";
+    return;
+  }
+
+  try {
+    const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
+    const { getAuth, signInAnonymously, onAuthStateChanged } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js");
+    const { getDatabase, ref, set, onValue, onDisconnect } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js");
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    fbDb = getDatabase(app);
+    fbSet = set;
+    fbRef = ref;
+
+    await signInAnonymously(auth);
+
+    onAuthStateChanged(auth, user => {
+      if (!user) return;
+      deviceUid = user.uid; // Офіційний криптографічний UID пристрою від Firebase
+      localStorage.setItem("bp_device_uid", deviceUid);
+      isOnlineConnected = true;
+      dot.classList.add("online");
+      modePill.textContent = "🟢 Live Онлайн";
+
+      // Автоматичне видалення поточного результату після закриття вкладки!
+      const currentAvgRef = ref(fbDb, `leaderboard/${deviceUid}/currentAvg`);
+      onDisconnect(currentAvgRef).remove();
+
+      // Слухаємо глобальну таблицю лідерів у реальному часі
+      const lbRef = ref(fbDb, "leaderboard");
+      onValue(lbRef, snapshot => {
+        const val = snapshot.val() || {};
+        const list = Object.entries(val).map(([uid, item]) => ({
+          uid,
+          name: item.name || "ПІЛОТ",
+          bestAvg: item.bestAvg,
+          bestSectors: item.bestSectors || [],
+          currentAvg: item.currentAvg || null
+        }));
+        localStorage.setItem("bp_drivers_registry_v3", JSON.stringify(list));
+        renderClassification();
+      });
+    });
+  } catch (err) {
+    console.warn("Firebase fallback to local:", err);
+    modePill.textContent = "Локальний режим";
+  }
+}
+
+// --- 5. Реєстр гравців (1 запис на 1 UID пристрою) ---
+function getDriversRegistry() {
+  try {
+    return JSON.parse(localStorage.getItem("bp_drivers_registry_v3") || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function syncDriverResult(avgMs, sectors) {
+  // 1. Зберігаємо поточний результат у sessionStorage (живе лише до закриття сесії)
+  setSessionCurrentRun(avgMs, sectors);
+
+  // 2. Оновлюємо реєстр (bestAvg оновлюється тільки якщо побив свій рекорд!)
+  const registry = getDriversRegistry();
+  let myEntry = registry.find(d => d.uid === deviceUid);
+
+  if (!myEntry) {
+    myEntry = {
+      uid: deviceUid,
+      name: currentDriver,
+      bestAvg: avgMs,
+      bestSectors: sectors,
+      currentAvg: avgMs
+    };
+    registry.push(myEntry);
+  } else {
+    myEntry.name = currentDriver;
+    myEntry.currentAvg = avgMs;
+    if (avgMs < myEntry.bestAvg) {
+      myEntry.bestAvg = avgMs;
+      myEntry.bestSectors = sectors;
+    }
+  }
+
+  localStorage.setItem("bp_drivers_registry_v3", JSON.stringify(registry));
+
+  // 3. Якщо увімкнений Firebase — пушимо у свій захищений вузол leaderboard/$uid
+  if (isOnlineConnected && fbDb && fbSet && fbRef) {
+    fbSet(fbRef(fbDb, `leaderboard/${deviceUid}`), {
+      name: myEntry.name,
+      bestAvg: myEntry.bestAvg,
+      bestSectors: myEntry.bestSectors,
+      currentAvg: avgMs,
+      updatedAt: Date.now()
+    });
+  }
+
+  renderClassification();
+}
+
+// --- 6. Вібрація та Аудіо-стук ---
 function detectVibrationSupport() {
   const hasApi = typeof navigator !== "undefined" && "vibrate" in navigator;
   const isTouchDevice = (navigator.maxTouchPoints && navigator.maxTouchPoints > 0) || ("ontouchstart" in window);
@@ -11,10 +160,8 @@ const canVibrate = detectVibrationSupport();
 const validModes = ["sub_kick", "micro_2ms", "acoustic_only"];
 let savedMode = localStorage.getItem("bp_haptic_mode");
 if (!validModes.includes(savedMode)) savedMode = null;
-
 let hapticMode = canVibrate ? (savedMode || "sub_kick") : "acoustic_only";
 
-// --- 2. Синтезатор звуку та Sub-Bass удару ---
 let audioCtx = null;
 function getAudioCtx() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -29,10 +176,8 @@ function playTone(freq = 860, duration = 0.085, type = "sine") {
     const gain = ctx.createGain();
     osc.type = type;
     osc.frequency.setValueAtTime(freq, ctx.currentTime);
-
     gain.gain.setValueAtTime(0.16, ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
-
     osc.connect(gain);
     gain.connect(ctx.destination);
     osc.start();
@@ -46,13 +191,10 @@ function playPhysicalSubThump() {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = "sine";
-
     osc.frequency.setValueAtTime(125, ctx.currentTime);
     osc.frequency.exponentialRampToValueAtTime(42, ctx.currentTime + 0.028);
-
     gain.gain.setValueAtTime(0.45, ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.032);
-
     osc.connect(gain);
     gain.connect(ctx.destination);
     osc.start();
@@ -90,7 +232,7 @@ const Haptics = {
   }
 };
 
-// --- 3. Елементи та Стан гри ---
+// --- 7. Елементи та Стан гри ---
 const pills = document.querySelectorAll(".light-pill");
 const statusBadge = document.getElementById("statusBadge");
 const mainTimer = document.getElementById("mainTimer");
@@ -99,13 +241,13 @@ const clutchTitle = document.getElementById("clutchTitle");
 const clutchSub = document.getElementById("clutchSub");
 const currentDriverLabel = document.getElementById("currentDriverLabel");
 const bestRecordDisplay = document.getElementById("bestRecordDisplay");
+const podiumStage = document.getElementById("podiumStage");
 const fullHistoryList = document.getElementById("fullHistoryList");
 
 let state = "IDLE";
 let activePointerId = null;
 let currentDriver = localStorage.getItem("bp_current_driver") || "ПІЛОТ 1";
-let recentDrivers = JSON.parse(localStorage.getItem("bp_recent_drivers") || '["МАКС", "ШАРЛЬ", "ФЕРНАНДО"]');
-let attempts = []; // [{ ms, fault, color }]
+let attempts = [];
 let timers = [];
 let lightsOutTimestamp = 0;
 
@@ -120,45 +262,30 @@ function resetLights() {
   pills.forEach(p => p.classList.remove("on", "fault"));
 }
 
-// --- 4. Логіка кольорів секторів Формули-1 ---
-function getLeaderboard() {
-  try {
-    return JSON.parse(localStorage.getItem("bitepoint_md3_lb_v2") || "[]");
-  } catch {
-    return [];
-  }
-}
-
+// --- 8. Оцінка кольору сектора (Фіолетовий / Зелений / Жовтий / Червоний) ---
 function evaluateSectorColor(ms, fault) {
   if (fault || ms >= 350) return "red";
 
-  const lb = getLeaderboard();
+  const registry = getDriversRegistry();
   let overallBestSector = Infinity;
   let personalBestSector = Infinity;
 
-  // Шукаємо найкращі сектори в історії
-  lb.forEach(entry => {
-    (entry.sectors || []).forEach(sec => {
-      if (!sec.fault && sec.ms < overallBestSector) {
-        overallBestSector = sec.ms;
-      }
-      if (entry.driver === currentDriver && !sec.fault && sec.ms < personalBestSector) {
+  registry.forEach(entry => {
+    (entry.bestSectors || []).forEach(sec => {
+      if (!sec.fault && sec.ms < overallBestSector) overallBestSector = sec.ms;
+      if (entry.uid === deviceUid && !sec.fault && sec.ms < personalBestSector) {
         personalBestSector = sec.ms;
       }
     });
   });
 
-  // Також враховуємо поточні спроби цієї сесії
   attempts.forEach(sec => {
     if (!sec.fault && sec.ms < overallBestSector) overallBestSector = sec.ms;
     if (!sec.fault && sec.ms < personalBestSector) personalBestSector = sec.ms;
   });
 
-  // Якщо це абсолютний рекорд (або перша чиста спроба взагалі) -> Фіолетовий сектор!
   if (ms <= overallBestSector) return "purple";
-  // Якщо це особистий рекорд поточного пілота -> Зелений сектор!
   if (ms <= personalBestSector) return "green";
-  // Інакше -> Жовтий сектор (повільніше за власний топ)
   return "yellow";
 }
 
@@ -168,9 +295,7 @@ function updateQBoxes() {
     const val = document.getElementById(`qVal${i}`);
 
     box.className = "q-box";
-    if (i === attempts.length && attempts.length < 3) {
-      box.classList.add("current");
-    }
+    if (i === attempts.length && attempts.length < 3) box.classList.add("current");
 
     if (attempts[i] !== undefined) {
       box.classList.add(`sector-${attempts[i].color}`);
@@ -183,17 +308,14 @@ function updateQBoxes() {
   }
 }
 
-// --- 5. Затискання та Відпускання (Виправлено рух пальцем по кнопці) ---
+// --- 9. Старт та Фініш ---
 function handleHoldStart(e) {
   if (state !== "IDLE") return;
   if (document.querySelector(".modal-backdrop.open")) return;
 
-  // Якщо це pointer-подія — захоплюємо палець, щоб рух по кнопці не скидав утримання
   if (e.pointerId !== undefined) {
     activePointerId = e.pointerId;
-    try {
-      clutchPad.setPointerCapture(e.pointerId);
-    } catch (_) {}
+    try { clutchPad.setPointerCapture(e.pointerId); } catch (_) {}
   }
 
   if (attempts.length >= 3) {
@@ -239,16 +361,12 @@ function handleHoldStart(e) {
 
 function handleRelease(e) {
   if (state === "IDLE") return;
-
-  // Ігноруємо відпускання чужого пальця
   if (e && e.pointerId !== undefined && activePointerId !== null && e.pointerId !== activePointerId) {
     return;
   }
 
   if (e && e.pointerId !== undefined) {
-    try {
-      clutchPad.releasePointerCapture(e.pointerId);
-    } catch (_) {}
+    try { clutchPad.releasePointerCapture(e.pointerId); } catch (_) {}
   }
   activePointerId = null;
 
@@ -301,74 +419,119 @@ function recordAttempt(ms, fault, color) {
 
   if (attempts.length === 3) {
     const avgMs = Math.round(attempts.reduce((acc, a) => acc + a.ms, 0) / 3);
-    saveToLeaderboard(currentDriver, avgMs, attempts);
+    syncDriverResult(avgMs, attempts);
     setTimeout(() => {
       statusBadge.textContent = `Серія завершена • Сер: ${(avgMs / 1000).toFixed(3)}s`;
     }, 700);
   }
 }
 
-// --- 6. Збереження найкращого результату та Історії ---
-function saveToLeaderboard(driver, avgMs, sectors) {
-  const lb = getLeaderboard();
-  lb.push({
-    driver,
-    avgMs,
-    sectors: sectors.map(s => ({ ms: s.ms, fault: s.fault, color: s.color })),
-    date: Date.now()
-  });
-  lb.sort((a, b) => a.avgMs - b.avgMs);
-  localStorage.setItem("bitepoint_md3_lb_v2", JSON.stringify(lb.slice(0, 30)));
-  renderBestAndHistory();
-}
+// --- 10. F1 QUALIFYING CLASSIFICATION (Діаграма Топ-3 зверху + Список знизу) ---
+function renderClassification() {
+  const registry = getDriversRegistry().sort((a, b) => a.bestAvg - b.bestAvg);
+  const mySessionRun = getSessionCurrentRun();
+  const myRecord = registry.find(d => d.uid === deviceUid);
 
-function renderBestAndHistory() {
-  const lb = getLeaderboard();
-
-  // 1. Оновлюємо компактну плашку найкращого результату на головному екрані
-  if (lb.length === 0) {
+  // 1. Нижня плашка на головному екрані (Поул + Твій кращий)
+  if (registry.length === 0) {
     bestRecordDisplay.innerHTML = `<span class="no-record">Поки немає результатів</span>`;
-    fullHistoryList.innerHTML = `<div style="color: var(--md-text-dim); font-size: 0.84rem; text-align:center; padding: 16px;">Історія порожня — проїдь першу серію з 3 стартів!</div>`;
+    podiumStage.innerHTML = `<div style="grid-column: 1 / -1; text-align:center; color: var(--md-text-dim); font-size:0.84rem; padding: 30px 0;">Проїдь 3 сектори, щоб відкрити подіум кваліфікації</div>`;
+    fullHistoryList.innerHTML = "";
     return;
   }
 
-  const best = lb[0];
+  const pole = registry[0];
+  const myBestHtml = myRecord
+    ? `<span class="you-split">Ти: ${(myRecord.bestAvg / 1000).toFixed(3)}s</span>`
+    : "";
+
   bestRecordDisplay.innerHTML = `
-    <span class="trophy">🏆 ${best.driver}</span>
-    <span class="best-time">${(best.avgMs / 1000).toFixed(3)}s</span>
+    <span class="trophy">P1 ${pole.name}</span>
+    <span class="best-time">${(pole.bestAvg / 1000).toFixed(3)}s</span>
+    ${myBestHtml}
   `;
 
-  // 2. Оновлюємо повний список в модалці Історії
-  fullHistoryList.innerHTML = lb.map((item, idx) => {
-    const sectorsHtml = (item.sectors || []).map((s, i) => `
-      <div class="mini-sector ${s.color || 'yellow'}">
-        S${i + 1}: ${s.fault ? '+5.0s' : (s.ms / 1000).toFixed(3) + 's'}
-      </div>
-    `).join("");
+  // 2. Будуємо Подіум ТОП-3 (у класичному порядку P2 зліва, P1 по центру, P3 справа)
+  const p1 = registry[0] || null;
+  const p2 = registry[1] || null;
+  const p3 = registry[2] || null;
+
+  const buildPodiumCol = (driver, posClass, label) => {
+    if (!driver) {
+      return `
+        <div class="podium-col ${posClass}" style="opacity:0.35">
+          <div class="podium-driver">—</div>
+          <div class="podium-time">—</div>
+          <div class="podium-pillar"><span class="podium-pos">${label}</span></div>
+        </div>
+      `;
+    }
+    const isMe = driver.uid === deviceUid;
+    const gapMs = driver.bestAvg - pole.bestAvg;
+    const gapText = gapMs === 0 ? "POLE" : `+${(gapMs / 1000).toFixed(3)}s`;
 
     return `
-      <div class="history-item">
-        <div class="history-top">
-          <div><span class="rank">#${idx + 1}</span><span>${item.driver}</span></div>
-          <div class="avg-score">${(item.avgMs / 1000).toFixed(3)}s</div>
+      <div class="podium-col ${posClass} ${isMe ? 'is-me' : ''}">
+        <div class="podium-driver">
+          <span>${driver.name}</span>
+          ${isMe ? '<span class="you-badge">ТИ</span>' : ''}
         </div>
-        <div class="history-sectors">${sectorsHtml}</div>
+        <div class="podium-time">${(driver.bestAvg / 1000).toFixed(3)}s</div>
+        <div class="podium-pillar">
+          <span class="podium-pos">${label}</span>
+          <span class="podium-gap">${gapText}</span>
+        </div>
+      </div>
+    `;
+  };
+
+  podiumStage.innerHTML = `
+    ${buildPodiumCol(p2, "p2", "P2")}
+    ${buildPodiumCol(p1, "p1", "P1")}
+    ${buildPodiumCol(p3, "p3", "P3")}
+  `;
+
+  // 3. Будуємо список усіх гравців (виділяючи поточного гравця + показуючи його сесійний і найкращий час)
+  fullHistoryList.innerHTML = registry.map((item, idx) => {
+    const isMe = item.uid === deviceUid;
+    const gapMs = item.bestAvg - pole.bestAvg;
+    const gapStr = gapMs === 0 ? "лідер" : `+${(gapMs / 1000).toFixed(3)}s`;
+
+    // Для нашого гравця беремо свіжий сесійний результат із sessionStorage (який зникне після закриття вкладки)
+    const activeCurrentMs = isMe
+      ? (mySessionRun ? mySessionRun.avgMs : null)
+      : (item.currentAvg || null);
+
+    const currentRunHtml = activeCurrentMs
+      ? `<span class="current-run-pill">⚡ Поточний (сесія): ${(activeCurrentMs / 1000).toFixed(3)}s</span>`
+      : `<span>Сесія не розпочата</span>`;
+
+    return `
+      <div class="driver-row ${isMe ? 'is-me' : ''}">
+        <div class="driver-row-top">
+          <div class="driver-ident">
+            <span class="pos-num">P${idx + 1}</span>
+            <span>${item.name}</span>
+            ${isMe ? '<span class="you-badge">ТИ</span>' : ''}
+          </div>
+          <div class="driver-times">
+            <span class="best-avg-val">${(item.bestAvg / 1000).toFixed(3)}s</span>
+            <span class="gap-to-pole">${gapStr}</span>
+          </div>
+        </div>
+        <div class="driver-dual-stats">
+          <span>🏆 Кращий: ${(item.bestAvg / 1000).toFixed(3)}s</span>
+          ${currentRunHtml}
+        </div>
       </div>
     `;
   }).join("");
 }
 
-// --- 7. Модальні вікна (Ім'я, Вібро, Історія) ---
+// --- 11. Модальні вікна ---
 const nameModal = document.getElementById("nameModal");
 const driverNameInput = document.getElementById("driverNameInput");
-const recentDriversContainer = document.getElementById("recentDriversContainer");
 const historyModal = document.getElementById("historyModal");
-
-function renderRecentChips() {
-  recentDriversContainer.innerHTML = recentDrivers.map(name => `
-    <button class="recent-chip" data-name="${name}">${name}</button>
-  `).join("");
-}
 
 function setDriverName(newName) {
   const clean = newName.trim().toUpperCase();
@@ -377,23 +540,21 @@ function setDriverName(newName) {
   currentDriverLabel.textContent = currentDriver;
   localStorage.setItem("bp_current_driver", currentDriver);
 
-  if (!recentDrivers.includes(clean)) {
-    recentDrivers.unshift(clean);
-    recentDrivers = recentDrivers.slice(0, 6);
-    localStorage.setItem("bp_recent_drivers", JSON.stringify(recentDrivers));
+  // Оновлюємо ім'я у своєму профілі пристрою
+  const registry = getDriversRegistry();
+  const myEntry = registry.find(d => d.uid === deviceUid);
+  if (myEntry) {
+    myEntry.name = currentDriver;
+    localStorage.setItem("bp_drivers_registry_v3", JSON.stringify(registry));
+    if (isOnlineConnected && fbDb && fbSet && fbRef) {
+      fbSet(fbRef(fbDb, `leaderboard/${deviceUid}/name`), currentDriver);
+    }
+    renderClassification();
   }
-
-  attempts = [];
-  updateQBoxes();
-  resetLights();
-  mainTimer.innerHTML = `0.000<span class="unit">s</span>`;
-  statusBadge.className = "status-badge";
-  statusBadge.textContent = "Готовий до старту";
 }
 
 document.getElementById("openNameModalBtn").addEventListener("click", () => {
   playPhysicalSubThump();
-  renderRecentChips();
   driverNameInput.value = currentDriver;
   nameModal.classList.add("open");
   setTimeout(() => driverNameInput.select(), 80);
@@ -415,18 +576,9 @@ driverNameInput.addEventListener("keydown", e => {
   }
 });
 
-recentDriversContainer.addEventListener("click", e => {
-  const chip = e.target.closest(".recent-chip");
-  if (!chip) return;
-  playPhysicalSubThump();
-  setDriverName(chip.dataset.name);
-  nameModal.classList.remove("open");
-});
-
-// Модалка Історії
 document.getElementById("openHistoryModalBtn").addEventListener("click", () => {
   playPhysicalSubThump();
-  renderBestAndHistory();
+  renderClassification();
   historyModal.classList.add("open");
 });
 
@@ -434,13 +586,7 @@ document.getElementById("closeHistoryBtn").addEventListener("click", () => {
   historyModal.classList.remove("open");
 });
 
-document.getElementById("clearLbBtn").addEventListener("click", () => {
-  playPhysicalSubThump();
-  localStorage.removeItem("bitepoint_md3_lb_v2");
-  renderBestAndHistory();
-});
-
-// Модалка Налаштування стуку
+// Налаштування стуку
 const hapticModal = document.getElementById("hapticModal");
 const hapticModeList = document.getElementById("hapticModeList");
 const hapticStatusBadge = document.getElementById("hapticStatusBadge");
@@ -485,7 +631,7 @@ document.getElementById("closeHapticBtn").addEventListener("click", () => {
   hapticModal.classList.remove("open");
 });
 
-// --- 8. Глобальні обробники подій ---
+// --- 12. Слухачі подій ---
 clutchPad.addEventListener("pointerdown", handleHoldStart);
 clutchPad.addEventListener("pointerup", handleRelease);
 clutchPad.addEventListener("pointercancel", handleRelease);
@@ -500,4 +646,5 @@ window.addEventListener("keyup", e => {
   if (e.code === "Space") handleRelease(e);
 });
 
-renderBestAndHistory();
+renderClassification();
+initCloudSync();
