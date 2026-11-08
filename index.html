@@ -7,526 +7,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --md-bg: #111318;
-      --md-surface: #1d2026;
-      --md-surface-high: #282a31;
-      --md-surface-highest: #33353d;
-      
-      --md-primary: #a8c7fa;
-      --md-on-primary: #062e6f;
-      --md-primary-container: #284777;
-      
-      --md-red: #ffb4ab;
-      --md-red-active: #ff5449;
-      --md-red-container: #93000a;
-      
-      --md-amber-active: #fbbc04;
-      
-      --md-green: #a6f2d1;
-      --md-green-container: #00513b;
-
-      --md-text: #e2e2e9;
-      --md-text-dim: #8e9099;
-
-      --spring: cubic-bezier(0.2, 0.9, 0.3, 1.15);
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      user-select: none;
-      -webkit-user-select: none;
-      -webkit-touch-callout: none;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    body {
-      background-color: var(--md-bg);
-      color: var(--md-text);
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      min-height: 100dvh;
-      display: flex;
-      justify-content: center;
-      padding: 16px;
-      overflow-x: hidden;
-    }
-
-    .app-container {
-      width: 100%;
-      max-width: 440px;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-
-    /* Top Bar */
-    .top-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: var(--md-surface);
-      padding: 10px 14px 10px 18px;
-      border-radius: 28px;
-    }
-
-    .app-title {
-      font-weight: 800;
-      font-size: 1.05rem;
-      letter-spacing: -0.02em;
-      color: var(--md-primary);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .top-actions {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .player-pill {
-      background: var(--md-primary-container);
-      color: var(--md-primary);
-      border: none;
-      padding: 8px 14px;
-      border-radius: 999px;
-      font-family: inherit;
-      font-size: 0.84rem;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      cursor: pointer;
-      transition: transform 0.15s ease, background-color 0.2s ease;
-    }
-
-    .player-pill:active {
-      transform: scale(0.95);
-    }
-
-    .icon-btn {
-      background: var(--md-surface-high);
-      color: var(--md-text-dim);
-      border: none;
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: transform 0.15s ease, color 0.2s ease;
-    }
-
-    .icon-btn:active {
-      transform: scale(0.92);
-      color: var(--md-primary);
-    }
-
-    /* Minimalist Material You Lights Card */
-    .lights-card {
-      background: var(--md-surface);
-      border-radius: 32px;
-      padding: 28px 20px;
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      height: 140px;
-      position: relative;
-    }
-
-    .light-pill {
-      width: 42px;
-      height: 54px;
-      border-radius: 999px;
-      background: var(--md-surface-high);
-      transition: all 0.28s var(--spring);
-    }
-
-    .light-pill.on {
-      height: 82px;
-      background: var(--md-red-active);
-      box-shadow: 0 0 28px rgba(255, 84, 73, 0.45);
-    }
-
-    .light-pill.fault {
-      height: 70px;
-      background: var(--md-amber-active);
-      box-shadow: 0 0 24px rgba(251, 188, 4, 0.4);
-      animation: pulseFault 0.35s infinite alternate;
-    }
-
-    @keyframes pulseFault {
-      from { transform: scale(0.95); opacity: 0.75; }
-      to { transform: scale(1.04); opacity: 1; }
-    }
-
-    /* Telemetry Display Card */
-    .telemetry-card {
-      background: var(--md-surface);
-      border-radius: 32px;
-      padding: 22px 20px;
-      text-align: center;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-
-    .status-badge {
-      align-self: center;
-      background: var(--md-surface-high);
-      color: var(--md-text-dim);
-      font-size: 0.78rem;
-      font-weight: 700;
-      padding: 5px 14px;
-      border-radius: 999px;
-      letter-spacing: 0.03em;
-      text-transform: uppercase;
-      transition: all 0.2s ease;
-    }
-
-    .status-badge.good {
-      background: var(--md-green-container);
-      color: var(--md-green);
-    }
-
-    .status-badge.penalty {
-      background: var(--md-red-container);
-      color: var(--md-red);
-    }
-
-    .main-timer {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 3.4rem;
-      font-weight: 700;
-      letter-spacing: -0.04em;
-      line-height: 1;
-      color: var(--md-text);
-    }
-
-    .main-timer span.unit {
-      font-size: 1.4rem;
-      color: var(--md-text-dim);
-      font-weight: 500;
-    }
-
-    /* Q1 / Q2 / Q3 Pills */
-    .q-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-    }
-
-    .q-box {
-      background: var(--md-surface-high);
-      padding: 10px 8px;
-      border-radius: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      border: 1.5px solid transparent;
-      transition: all 0.2s ease;
-    }
-
-    .q-box.current {
-      border-color: var(--md-primary);
-      background: rgba(168, 199, 250, 0.08);
-    }
-
-    .q-label {
-      font-size: 0.72rem;
-      font-weight: 700;
-      color: var(--md-text-dim);
-    }
-
-    .q-val {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.95rem;
-      font-weight: 700;
-    }
-
-    /* Interactive Clutch Button */
-    .clutch-pad {
-      flex: 1;
-      min-height: 150px;
-      background: var(--md-primary-container);
-      color: var(--md-primary);
-      border-radius: 36px;
-      border: none;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      gap: 8px;
-      cursor: pointer;
-      transition: transform 0.22s var(--spring), border-radius 0.25s ease, background-color 0.2s ease;
-      touch-action: manipulation;
-    }
-
-    .clutch-pad.holding {
-      transform: scale(0.96);
-      border-radius: 48px;
-      background: var(--md-primary);
-      color: var(--md-on-primary);
-    }
-
-    .clutch-pad.go-state {
-      background: var(--md-green);
-      color: var(--md-green-container);
-    }
-
-    .clutch-title {
-      font-size: 1.25rem;
-      font-weight: 800;
-      letter-spacing: -0.01em;
-    }
-
-    .clutch-sub {
-      font-size: 0.85rem;
-      opacity: 0.8;
-      font-weight: 600;
-    }
-
-    /* Leaderboard Card */
-    .leaderboard-card {
-      background: var(--md-surface);
-      border-radius: 28px;
-      padding: 16px 18px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .lb-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 0.82rem;
-      font-weight: 700;
-      color: var(--md-text-dim);
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-    }
-
-    .lb-clear {
-      background: none;
-      border: none;
-      color: var(--md-primary);
-      font-size: 0.78rem;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    .lb-list {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      max-height: 135px;
-      overflow-y: auto;
-    }
-
-    .lb-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: var(--md-surface-high);
-      padding: 9px 14px;
-      border-radius: 16px;
-      font-size: 0.88rem;
-      font-weight: 600;
-    }
-
-    .lb-item .rank {
-      color: var(--md-primary);
-      font-weight: 800;
-      margin-right: 8px;
-    }
-
-    .lb-item .score {
-      font-family: 'JetBrains Mono', monospace;
-      font-weight: 700;
-    }
-
-    /* Material You Dialogs (Modals) */
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.65);
-      backdrop-filter: blur(6px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      z-index: 100;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.22s ease;
-    }
-
-    .modal-backdrop.open {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    .modal-card {
-      width: 100%;
-      max-width: 360px;
-      background: var(--md-surface-high);
-      border-radius: 28px;
-      padding: 24px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      transform: scale(0.92) translateY(10px);
-      transition: transform 0.25s var(--spring);
-      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-    }
-
-    .modal-backdrop.open .modal-card {
-      transform: scale(1) translateY(0);
-    }
-
-    .modal-title {
-      font-size: 1.2rem;
-      font-weight: 800;
-      color: var(--md-text);
-    }
-
-    .modal-sub {
-      font-size: 0.82rem;
-      color: var(--md-text-dim);
-      line-height: 1.45;
-      margin-top: -6px;
-    }
-
-    .device-status-pill {
-      font-size: 0.75rem;
-      font-weight: 700;
-      padding: 6px 12px;
-      border-radius: 12px;
-      background: var(--md-surface);
-      color: var(--md-primary);
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .md-input {
-      width: 100%;
-      background: var(--md-surface);
-      border: 2px solid transparent;
-      color: var(--md-text);
-      font-family: inherit;
-      font-size: 1.05rem;
-      font-weight: 700;
-      padding: 14px 16px;
-      border-radius: 18px;
-      outline: none;
-      user-select: text;
-      -webkit-user-select: text;
-      transition: border-color 0.2s ease;
-    }
-
-    .md-input:focus {
-      border-color: var(--md-primary);
-    }
-
-    .recent-chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-
-    .recent-chip {
-      background: var(--md-surface-highest);
-      color: var(--md-text);
-      border: none;
-      padding: 7px 13px;
-      border-radius: 999px;
-      font-size: 0.8rem;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .modal-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 8px;
-      margin-top: 4px;
-    }
-
-    .md-btn {
-      border: none;
-      font-family: inherit;
-      font-size: 0.88rem;
-      font-weight: 700;
-      padding: 11px 18px;
-      border-radius: 999px;
-      cursor: pointer;
-    }
-
-    .md-btn.text {
-      background: transparent;
-      color: var(--md-primary);
-    }
-
-    .md-btn.filled {
-      background: var(--md-primary);
-      color: var(--md-on-primary);
-    }
-
-    /* Mode Selector Cards inside Haptic Modal */
-    .mode-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .mode-option {
-      background: var(--md-surface);
-      border: 1.5px solid transparent;
-      border-radius: 18px;
-      padding: 12px 14px;
-      text-align: left;
-      color: var(--md-text);
-      font-family: inherit;
-      cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-      transition: all 0.18s ease;
-    }
-
-    .mode-option.active {
-      border-color: var(--md-primary);
-      background: rgba(168, 199, 250, 0.1);
-    }
-
-    .mode-option.disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-
-    .mode-option .m-title {
-      font-size: 0.88rem;
-      font-weight: 700;
-      color: var(--md-primary);
-    }
-
-    .mode-option .m-desc {
-      font-size: 0.76rem;
-      color: var(--md-text-dim);
-    }
-  </style>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
   <div class="app-container">
-    <!-- Top Bar -->
+    <!-- Верхня панель -->
     <div class="top-bar">
       <div class="app-title">● Bite Point</div>
       <div class="top-actions">
@@ -540,7 +26,7 @@
       </div>
     </div>
 
-    <!-- Minimalist Capsule Lights -->
+    <!-- Капсули світлофора -->
     <div class="lights-card">
       <div class="light-pill"></div>
       <div class="light-pill"></div>
@@ -549,51 +35,55 @@
       <div class="light-pill"></div>
     </div>
 
-    <!-- Telemetry & Q1-Q3 Progress -->
+    <!-- Телеметрія та Сектори (Спроби 1-3) -->
     <div class="telemetry-card">
       <div class="status-badge" id="statusBadge">Готовий до старту</div>
       <div class="main-timer" id="mainTimer">0.000<span class="unit">s</span></div>
       
       <div class="q-grid">
         <div class="q-box current" id="qBox0">
-          <span class="q-label">СПРОБА 1</span>
+          <span class="q-label">СЕКТОР 1</span>
           <span class="q-val" id="qVal0">—</span>
         </div>
         <div class="q-box" id="qBox1">
-          <span class="q-label">СПРОБА 2</span>
+          <span class="q-label">СЕКТОР 2</span>
           <span class="q-val" id="qVal1">—</span>
         </div>
         <div class="q-box" id="qBox2">
-          <span class="q-label">СПРОБА 3</span>
+          <span class="q-label">СЕКТОР 3</span>
           <span class="q-val" id="qVal2">—</span>
         </div>
       </div>
     </div>
 
-    <!-- Tactile Clutch Pad -->
+    <!-- Пелюстка зчеплення -->
     <button class="clutch-pad" id="clutchPad">
       <span class="clutch-title" id="clutchTitle">Затисни та тримай</span>
       <span class="clutch-sub" id="clutchSub">Відпусти, коли капсули згаснуть</span>
     </button>
 
-    <!-- Local Leaderboard -->
-    <div class="leaderboard-card">
-      <div class="lb-header">
-        <span>Таблиця лідерів (Середній з 3)</span>
-        <button class="lb-clear" id="clearLbBtn">Очистити</button>
+    <!-- Компактна картка найкращого результату + кнопка історії -->
+    <div class="best-summary-card">
+      <div class="best-info">
+        <span class="best-label">Лідер сесії (Середній з 3)</span>
+        <div class="best-driver-row" id="bestRecordDisplay">
+          <span class="no-record">Поки немає результатів</span>
+        </div>
       </div>
-      <div class="lb-list" id="lbList"></div>
+      <button class="history-btn" id="openHistoryModalBtn">
+        <span>Історія</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg>
+      </button>
     </div>
   </div>
 
-  <!-- MODAL 1: Custom Material You Player Name Dialog -->
+  <!-- МОДАЛКА 1: Вибір гравця -->
   <div class="modal-backdrop" id="nameModal">
     <div class="modal-card">
       <div class="modal-title">Хто зараз за кермом?</div>
       <div class="modal-sub">Введи ім'я або обери зі списку друзів для нової серії з 3 стартів.</div>
       
       <input type="text" class="md-input" id="driverNameInput" maxlength="12" placeholder="Ім'я або нік..." autocomplete="off" />
-      
       <div class="recent-chips" id="recentDriversContainer"></div>
 
       <div class="modal-actions">
@@ -603,7 +93,7 @@
     </div>
   </div>
 
-  <!-- MODAL 2: Haptic Mode Selector Dialog (Options 1, 2, 3 only) -->
+  <!-- МОДАЛКА 2: Налаштування тактильного стуку -->
   <div class="modal-backdrop" id="hapticModal">
     <div class="modal-card">
       <div class="modal-title">Режим тактильного стуку</div>
@@ -631,419 +121,29 @@
     </div>
   </div>
 
-  <script>
-    // --- Hardware Vibration Capability Detector (Fixed for Chrome User Activation policy) ---
-    function detectVibrationSupport() {
-      const hasApi = typeof navigator !== "undefined" && "vibrate" in navigator;
-      const isTouchDevice = (navigator.maxTouchPoints && navigator.maxTouchPoints > 0) || ("ontouchstart" in window);
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
-                    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  <!-- МОДАЛКА 3: Повна історія та Таблиця лідерів -->
+  <div class="modal-backdrop" id="historyModal">
+    <div class="modal-card modal-large">
+      <div class="modal-header-row">
+        <div class="modal-title">Історія заїздів</div>
+        <button class="lb-clear" id="clearLbBtn">Очистити все</button>
+      </div>
 
-      // Не викликаємо navigator.vibrate(0) на старті, бо Chrome блокує його до першого тапу!
-      return Boolean(hasApi && isTouchDevice && !isIOS);
-    }
+      <div class="legend-pills">
+        <span class="leg-pill purple">🟣 Рекорд</span>
+        <span class="leg-pill green">🟢 Свій топ</span>
+        <span class="leg-pill yellow">🟡 Повільніше</span>
+        <span class="leg-pill red">🔴 Штраф</span>
+      </div>
 
-    const canVibrate = detectVibrationSupport();
+      <div class="history-list" id="fullHistoryList"></div>
 
-    // Якщо вібро підтримується -> автоматом Режим 1 ("sub_kick"), інакше -> Режим 3 ("acoustic_only")
-    const validModes = ["sub_kick", "micro_2ms", "acoustic_only"];
-    let savedMode = localStorage.getItem("bp_haptic_mode");
-    if (!validModes.includes(savedMode)) savedMode = null;
+      <div class="modal-actions">
+        <button class="md-btn filled" id="closeHistoryBtn">Закрити</button>
+      </div>
+    </div>
+  </div>
 
-    let hapticMode = canVibrate ? (savedMode || "sub_kick") : "acoustic_only";
-
-    // --- Audio & Acoustic Haptic Synthesizer ---
-    let audioCtx = null;
-    function getAudioCtx() {
-      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      if (audioCtx.state === "suspended") audioCtx.resume();
-      return audioCtx;
-    }
-
-    function playTone(freq = 860, duration = 0.085, type = "sine") {
-      try {
-        const ctx = getAudioCtx();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = type;
-        osc.frequency.setValueAtTime(freq, ctx.currentTime);
-
-        gain.gain.setValueAtTime(0.16, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
-
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(ctx.currentTime + duration);
-      } catch (e) {}
-    }
-
-    // Фізичний низькочастотний удар (Sub-Bass Thump 125Hz -> 42Hz за 28 мс)
-    function playPhysicalSubThump() {
-      try {
-        const ctx = getAudioCtx();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = "sine";
-        
-        osc.frequency.setValueAtTime(125, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(42, ctx.currentTime + 0.028);
-
-        gain.gain.setValueAtTime(0.45, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.032);
-
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.034);
-      } catch (e) {}
-    }
-
-    // --- Haptic Modes Controller ---
-    const Haptics = {
-      lightKnock() {
-        if (!canVibrate || hapticMode === "acoustic_only") {
-          playPhysicalSubThump();
-          return;
-        }
-
-        if (hapticMode === "sub_kick") {
-          navigator.vibrate(2);
-          playPhysicalSubThump();
-        } else if (hapticMode === "micro_2ms") {
-          navigator.vibrate(2);
-        }
-      },
-      release() {
-        if (!canVibrate || hapticMode === "acoustic_only") {
-          playPhysicalSubThump();
-        } else {
-          navigator.vibrate(3);
-          playPhysicalSubThump();
-        }
-      },
-      fault() {
-        if (canVibrate && hapticMode !== "acoustic_only") {
-          navigator.vibrate([12, 55, 16]);
-        } else {
-          playPhysicalSubThump();
-        }
-      }
-    };
-
-    // --- State & Elements ---
-    const pills = document.querySelectorAll(".light-pill");
-    const statusBadge = document.getElementById("statusBadge");
-    const mainTimer = document.getElementById("mainTimer");
-    const clutchPad = document.getElementById("clutchPad");
-    const clutchTitle = document.getElementById("clutchTitle");
-    const clutchSub = document.getElementById("clutchSub");
-    const lbList = document.getElementById("lbList");
-    const currentDriverLabel = document.getElementById("currentDriverLabel");
-
-    let state = "IDLE";
-    let currentDriver = localStorage.getItem("bp_current_driver") || "ПІЛОТ 1";
-    let recentDrivers = JSON.parse(localStorage.getItem("bp_recent_drivers") || '["МАКС", "ШАРЛЬ", "ФЕРНАНДО"]');
-    let attempts = [];
-    let timers = [];
-    let lightsOutTimestamp = 0;
-
-    currentDriverLabel.textContent = currentDriver;
-
-    function clearAllTimers() {
-      timers.forEach(t => clearTimeout(t));
-      timers = [];
-    }
-
-    function resetLights() {
-      pills.forEach(p => p.classList.remove("on", "fault"));
-    }
-
-    function updateQBoxes() {
-      for (let i = 0; i < 3; i++) {
-        const box = document.getElementById(`qBox${i}`);
-        const val = document.getElementById(`qVal${i}`);
-        box.classList.toggle("current", i === attempts.length && attempts.length < 3);
-
-        if (attempts[i] !== undefined) {
-          val.textContent = attempts[i].fault
-            ? "+5.000s"
-            : `${(attempts[i].ms / 1000).toFixed(3)}s`;
-        } else {
-          val.textContent = "—";
-        }
-      }
-    }
-
-    // --- Start Sequence (Hold) ---
-    function handleHoldStart(e) {
-      if (state !== "IDLE") return;
-      if (document.querySelector(".modal-backdrop.open")) return;
-
-      if (attempts.length >= 3) {
-        attempts = [];
-        updateQBoxes();
-      }
-
-      // Жодного navigator.vibrate() при дотику, щоб не перебивати чистий системний тап
-      playPhysicalSubThump();
-
-      state = "STAGING";
-      resetLights();
-
-      clutchPad.classList.add("holding");
-      clutchPad.classList.remove("go-state");
-      clutchTitle.textContent = "Тримай...";
-      clutchSub.textContent = "Чекай згасання всіх капсул";
-      statusBadge.className = "status-badge";
-      statusBadge.textContent = "Відлік старту";
-      mainTimer.innerHTML = `0.000<span class="unit">s</span>`;
-
-      for (let i = 0; i < 5; i++) {
-        const t = setTimeout(() => {
-          pills[i].classList.add("on");
-          Haptics.lightKnock();
-          playTone(860, 0.085, "sine");
-
-          if (i === 4) {
-            state = "HOLD_RANDOM";
-            const randomDelay = Math.floor(Math.random() * 2800) + 200;
-            const outTimer = setTimeout(() => {
-              resetLights();
-              state = "LIGHTS_OUT";
-              lightsOutTimestamp = performance.now();
-              clutchPad.classList.add("go-state");
-              clutchTitle.textContent = "ВІДПУСКАЙ!";
-              statusBadge.textContent = "СТАРТ!";
-            }, randomDelay);
-            timers.push(outTimer);
-          }
-        }, (i + 1) * 900);
-        timers.push(t);
-      }
-    }
-
-    // --- Release Sequence ---
-    function handleRelease(e) {
-      if (state === "IDLE") return;
-
-      clutchPad.classList.remove("holding", "go-state");
-
-      if (state === "STAGING" || state === "HOLD_RANDOM") {
-        clearAllTimers();
-        state = "IDLE";
-        Haptics.fault();
-        playTone(220, 0.26, "triangle");
-
-        pills.forEach(p => {
-          p.classList.remove("on");
-          p.classList.add("fault");
-        });
-
-        statusBadge.className = "status-badge penalty";
-        statusBadge.textContent = "Фальстарт • Штраф +5с";
-        mainTimer.innerHTML = `+5.000<span class="unit">s</span>`;
-        recordAttempt(5000, true);
-      } else if (state === "LIGHTS_OUT") {
-        const reactionMs = Math.round(performance.now() - lightsOutTimestamp);
-        state = "IDLE";
-        Haptics.release();
-        playTone(1240, 0.11, "sine");
-
-        mainTimer.innerHTML = `${(reactionMs / 1000).toFixed(3)}<span class="unit">s</span>`;
-        statusBadge.className = "status-badge good";
-        statusBadge.textContent = getVerdict(reactionMs);
-        recordAttempt(reactionMs, false);
-      }
-
-      clutchTitle.textContent = attempts.length >= 3 ? "Нова серія (Затисни)" : "Затисни та тримай";
-      clutchSub.textContent = "Відпусти, коли капсули згаснуть";
-    }
-
-    function getVerdict(ms) {
-      if (ms < 150) return "Кібер-реакція ⚡";
-      if (ms < 210) return "Рівень пілота Ф1 🔥";
-      if (ms < 270) return "Солідний старт 👍";
-      return "Трохи проспав старт 🐢";
-    }
-
-    function recordAttempt(ms, fault) {
-      attempts.push({ ms, fault });
-      updateQBoxes();
-
-      if (attempts.length === 3) {
-        const avgMs = Math.round(attempts.reduce((acc, a) => acc + a.ms, 0) / 3);
-        saveToLeaderboard(currentDriver, avgMs);
-        setTimeout(() => {
-          statusBadge.textContent = `Серія завершена • Сер: ${(avgMs / 1000).toFixed(3)}s`;
-        }, 600);
-      }
-    }
-
-    // --- Custom Name Modal Logic ---
-    const nameModal = document.getElementById("nameModal");
-    const driverNameInput = document.getElementById("driverNameInput");
-    const recentDriversContainer = document.getElementById("recentDriversContainer");
-
-    function renderRecentChips() {
-      recentDriversContainer.innerHTML = recentDrivers.map(name => `
-        <button class="recent-chip" data-name="${name}">${name}</button>
-      `).join("");
-    }
-
-    function setDriverName(newName) {
-      const clean = newName.trim().toUpperCase();
-      if (!clean) return;
-      currentDriver = clean;
-      currentDriverLabel.textContent = currentDriver;
-      localStorage.setItem("bp_current_driver", currentDriver);
-
-      if (!recentDrivers.includes(clean)) {
-        recentDrivers.unshift(clean);
-        recentDrivers = recentDrivers.slice(0, 6);
-        localStorage.setItem("bp_recent_drivers", JSON.stringify(recentDrivers));
-      }
-
-      attempts = [];
-      updateQBoxes();
-      resetLights();
-      mainTimer.innerHTML = `0.000<span class="unit">s</span>`;
-      statusBadge.className = "status-badge";
-      statusBadge.textContent = "Готовий до старту";
-    }
-
-    document.getElementById("openNameModalBtn").addEventListener("click", () => {
-      playPhysicalSubThump();
-      renderRecentChips();
-      driverNameInput.value = currentDriver;
-      nameModal.classList.add("open");
-      setTimeout(() => driverNameInput.select(), 80);
-    });
-
-    document.getElementById("cancelNameBtn").addEventListener("click", () => {
-      nameModal.classList.remove("open");
-    });
-
-    document.getElementById("saveNameBtn").addEventListener("click", () => {
-      playPhysicalSubThump();
-      setDriverName(driverNameInput.value || currentDriver);
-      nameModal.classList.remove("open");
-    });
-
-    driverNameInput.addEventListener("keydown", e => {
-      if (e.key === "Enter") {
-        playPhysicalSubThump();
-        setDriverName(driverNameInput.value || currentDriver);
-        nameModal.classList.remove("open");
-      }
-    });
-
-    recentDriversContainer.addEventListener("click", e => {
-      const chip = e.target.closest(".recent-chip");
-      if (!chip) return;
-      playPhysicalSubThump();
-      setDriverName(chip.dataset.name);
-      nameModal.classList.remove("open");
-    });
-
-    // --- Haptic Mode Selector Modal Logic ---
-    const hapticModal = document.getElementById("hapticModal");
-    const hapticModeList = document.getElementById("hapticModeList");
-    const hapticStatusBadge = document.getElementById("hapticStatusBadge");
-
-    function updateModeUI() {
-      hapticStatusBadge.textContent = canVibrate
-        ? "✓ Вібромотор підтримується (активний вибір 1–3)"
-        : "ℹ Вібромотор недоступний — авто-режим №3";
-
-      hapticModeList.querySelectorAll(".mode-option").forEach(btn => {
-        const mode = btn.dataset.mode;
-        const isDisabled = !canVibrate && mode !== "acoustic_only";
-        btn.classList.toggle("disabled", isDisabled);
-        btn.classList.toggle("active", mode === hapticMode);
-      });
-    }
-    updateModeUI();
-
-    document.getElementById("openHapticModalBtn").addEventListener("click", () => {
-      playPhysicalSubThump();
-      updateModeUI();
-      hapticModal.classList.add("open");
-    });
-
-    hapticModeList.addEventListener("click", e => {
-      const btn = e.target.closest(".mode-option");
-      if (!btn || btn.classList.contains("disabled")) return;
-
-      hapticMode = btn.dataset.mode;
-      localStorage.setItem("bp_haptic_mode", hapticMode);
-      updateModeUI();
-      Haptics.lightKnock();
-      playTone(860, 0.085, "sine");
-    });
-
-    document.getElementById("testHapticBtn").addEventListener("click", () => {
-      Haptics.lightKnock();
-      playTone(860, 0.085, "sine");
-    });
-
-    document.getElementById("closeHapticBtn").addEventListener("click", () => {
-      hapticModal.classList.remove("open");
-    });
-
-    // --- Leaderboard Logic ---
-    function getLeaderboard() {
-      try {
-        return JSON.parse(localStorage.getItem("bitepoint_md3_lb") || "[]");
-      } catch {
-        return [];
-      }
-    }
-
-    function saveToLeaderboard(driver, avgMs) {
-      const lb = getLeaderboard();
-      lb.push({ driver, avgMs, date: Date.now() });
-      lb.sort((a, b) => a.avgMs - b.avgMs);
-      localStorage.setItem("bitepoint_md3_lb", JSON.stringify(lb.slice(0, 10)));
-      renderLeaderboard();
-    }
-
-    function renderLeaderboard() {
-      const lb = getLeaderboard();
-      if (lb.length === 0) {
-        lbList.innerHTML = `<div style="color: var(--md-text-dim); font-size: 0.82rem; text-align:center; padding: 8px;">Поки немає результатів — проїдь 3 спроби</div>`;
-        return;
-      }
-      lbList.innerHTML = lb.map((item, idx) => `
-        <div class="lb-item">
-          <div><span class="rank">#${idx + 1}</span><span>${item.driver}</span></div>
-          <div class="score">${(item.avgMs / 1000).toFixed(3)}s</div>
-        </div>
-      `).join("");
-    }
-
-    // --- Event Listeners ---
-    clutchPad.addEventListener("pointerdown", handleHoldStart);
-    window.addEventListener("pointerup", handleRelease);
-    window.addEventListener("pointercancel", handleRelease);
-    window.addEventListener("contextmenu", e => e.preventDefault());
-
-    window.addEventListener("keydown", e => {
-      if (e.code === "Space" && !e.repeat && !document.querySelector(".modal-backdrop.open")) {
-        handleHoldStart(e);
-      }
-    });
-    window.addEventListener("keyup", e => {
-      if (e.code === "Space") handleRelease(e);
-    });
-
-    document.getElementById("clearLbBtn").addEventListener("click", () => {
-      playPhysicalSubThump();
-      localStorage.removeItem("bitepoint_md3_lb");
-      renderLeaderboard();
-    });
-
-    renderLeaderboard();
-  </script>
+  <script src="app.js"></script>
 </body>
 </html>
